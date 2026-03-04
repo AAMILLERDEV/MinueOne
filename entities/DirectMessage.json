@@ -1,0 +1,33 @@
+{
+  "name": "DirectMessage",
+  "type": "object",
+  "properties": {
+    "from_profile_id": {
+      "type": "string",
+      "description": "Sender profile"
+    },
+    "to_profile_id": {
+      "type": "string",
+      "description": "Recipient profile"
+    },
+    "content": {
+      "type": "string",
+      "description": "Message content"
+    },
+    "is_read": {
+      "type": "boolean",
+      "default": false,
+      "description": "Read status"
+    },
+    "is_archived": {
+      "type": "boolean",
+      "default": false,
+      "description": "Archived by recipient"
+    }
+  },
+  "required": [
+    "from_profile_id",
+    "to_profile_id",
+    "content"
+  ]
+}

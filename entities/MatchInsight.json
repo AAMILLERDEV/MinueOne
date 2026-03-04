@@ -1,0 +1,67 @@
+{
+  "name": "MatchInsight",
+  "type": "object",
+  "properties": {
+    "profile_id": {
+      "type": "string",
+      "description": "Profile receiving the insight"
+    },
+    "target_profile_id": {
+      "type": "string",
+      "description": "Profile the insight is about"
+    },
+    "compatibility_score": {
+      "type": "number",
+      "description": "Overall compatibility score 0-100"
+    },
+    "compatibility_breakdown": {
+      "type": "string",
+      "description": "JSON with category scores: skills, goals, communication, values"
+    },
+    "talking_points": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "AI-suggested conversation starters"
+    },
+    "potential_synergies": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Identified areas of potential collaboration"
+    },
+    "risk_factors": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Potential challenges to be aware of"
+    },
+    "recommendation_reason": {
+      "type": "string",
+      "description": "Why this match is recommended"
+    },
+    "insight_type": {
+      "type": "string",
+      "enum": [
+        "ai_recommended",
+        "mutual_interest",
+        "complementary_skills",
+        "network_connection"
+      ],
+      "description": "Type of insight"
+    },
+    "expires_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When this insight expires and should be refreshed"
+    }
+  },
+  "required": [
+    "profile_id",
+    "target_profile_id",
+    "compatibility_score"
+  ]
+}

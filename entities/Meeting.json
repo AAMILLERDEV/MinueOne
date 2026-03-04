@@ -1,0 +1,72 @@
+{
+  "name": "Meeting",
+  "type": "object",
+  "properties": {
+    "match_id": {
+      "type": "string",
+      "description": "Reference to the match"
+    },
+    "organizer_profile_id": {
+      "type": "string",
+      "description": "Profile who scheduled the meeting"
+    },
+    "attendee_profile_id": {
+      "type": "string",
+      "description": "Profile invited to the meeting"
+    },
+    "title": {
+      "type": "string",
+      "description": "Meeting title"
+    },
+    "description": {
+      "type": "string",
+      "description": "Meeting description"
+    },
+    "scheduled_date": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Scheduled date and time"
+    },
+    "duration_minutes": {
+      "type": "number",
+      "default": 30,
+      "description": "Meeting duration in minutes"
+    },
+    "location": {
+      "type": "string",
+      "description": "Meeting location or video link"
+    },
+    "meeting_type": {
+      "type": "string",
+      "enum": [
+        "video",
+        "phone",
+        "in_person"
+      ],
+      "default": "video",
+      "description": "Type of meeting"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "confirmed",
+        "declined",
+        "completed",
+        "cancelled"
+      ],
+      "default": "pending",
+      "description": "Meeting status"
+    },
+    "notes": {
+      "type": "string",
+      "description": "Meeting notes"
+    }
+  },
+  "required": [
+    "match_id",
+    "organizer_profile_id",
+    "attendee_profile_id",
+    "scheduled_date"
+  ]
+}

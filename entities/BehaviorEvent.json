@@ -1,0 +1,106 @@
+{
+  "name": "BehaviorEvent",
+  "type": "object",
+  "properties": {
+    "anon_id": {
+      "type": "string",
+      "description": "Hashed anonymous identifier"
+    },
+    "event_type": {
+      "type": "string",
+      "enum": [
+        "swipe_like",
+        "swipe_pass",
+        "match_created",
+        "message_sent",
+        "message_received",
+        "profile_view",
+        "profile_view_extended",
+        "session_start",
+        "session_end",
+        "feature_used",
+        "filter_applied",
+        "search_performed",
+        "upgrade_viewed",
+        "upgrade_completed",
+        "meeting_scheduled",
+        "meeting_completed"
+      ],
+      "description": "Type of behavioral event"
+    },
+    "event_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Date of event (no precise time)"
+    },
+    "day_of_week": {
+      "type": "number",
+      "description": "0-6 day of week"
+    },
+    "hour_bucket": {
+      "type": "string",
+      "enum": [
+        "morning",
+        "afternoon",
+        "evening",
+        "night"
+      ],
+      "description": "Time of day bucket"
+    },
+    "target_profile_type": {
+      "type": "string",
+      "enum": [
+        "founder",
+        "collaborator",
+        "investor",
+        "service_provider",
+        "accelerator"
+      ],
+      "description": "Type of profile interacted with (no ID)"
+    },
+    "duration_bucket": {
+      "type": "string",
+      "enum": [
+        "<5s",
+        "5-15s",
+        "15-30s",
+        "30-60s",
+        "1-3m",
+        "3-5m",
+        "5m+"
+      ],
+      "description": "Time spent bucket"
+    },
+    "feature_name": {
+      "type": "string",
+      "description": "Feature used (for feature_used events)"
+    },
+    "filter_category": {
+      "type": "string",
+      "description": "Filter type applied (for filter events)"
+    },
+    "session_id_hash": {
+      "type": "string",
+      "description": "Hashed session identifier for session grouping"
+    },
+    "platform": {
+      "type": "string",
+      "enum": [
+        "web",
+        "mobile_web",
+        "ios",
+        "android"
+      ],
+      "description": "Platform used"
+    },
+    "is_traveling": {
+      "type": "boolean",
+      "description": "User location differs from home metro"
+    }
+  },
+  "required": [
+    "anon_id",
+    "event_type",
+    "event_date"
+  ]
+}

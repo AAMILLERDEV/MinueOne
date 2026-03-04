@@ -1,0 +1,85 @@
+{
+  "name": "ContentPerformance",
+  "type": "object",
+  "properties": {
+    "anon_id": {
+      "type": "string",
+      "description": "Hashed anonymous identifier"
+    },
+    "metrics_period": {
+      "type": "string",
+      "description": "YYYY-MM period"
+    },
+    "profile_completeness_score": {
+      "type": "number",
+      "description": "0-100 profile completeness"
+    },
+    "has_avatar": {
+      "type": "boolean",
+      "description": "Profile has photo"
+    },
+    "bio_length_bucket": {
+      "type": "string",
+      "enum": [
+        "none",
+        "short",
+        "medium",
+        "long"
+      ],
+      "description": "Bio length category"
+    },
+    "skills_count_bucket": {
+      "type": "string",
+      "enum": [
+        "0",
+        "1-3",
+        "4-6",
+        "7+"
+      ],
+      "description": "Number of skills listed"
+    },
+    "has_linkedin": {
+      "type": "boolean",
+      "description": "LinkedIn connected"
+    },
+    "has_website": {
+      "type": "boolean",
+      "description": "Website provided"
+    },
+    "verification_count": {
+      "type": "number",
+      "description": "Number of verification badges"
+    },
+    "profile_view_count": {
+      "type": "number",
+      "default": 0,
+      "description": "Times profile was viewed"
+    },
+    "like_received_rate": {
+      "type": "number",
+      "description": "Likes received per 100 views"
+    },
+    "opening_message_success_rate": {
+      "type": "number",
+      "description": "Response rate to first messages"
+    },
+    "conversation_continuation_rate": {
+      "type": "number",
+      "description": "Conversations that go past 5 messages"
+    },
+    "avg_time_viewed_bucket": {
+      "type": "string",
+      "enum": [
+        "<5s",
+        "5-15s",
+        "15-30s",
+        "30s+"
+      ],
+      "description": "Average time others spend viewing"
+    }
+  },
+  "required": [
+    "anon_id",
+    "metrics_period"
+  ]
+}

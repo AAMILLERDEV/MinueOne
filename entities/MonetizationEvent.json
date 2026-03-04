@@ -1,0 +1,98 @@
+{
+  "name": "MonetizationEvent",
+  "type": "object",
+  "properties": {
+    "anon_id": {
+      "type": "string",
+      "description": "Hashed anonymous identifier"
+    },
+    "event_type": {
+      "type": "string",
+      "enum": [
+        "subscription_started",
+        "subscription_upgraded",
+        "subscription_downgraded",
+        "subscription_cancelled",
+        "subscription_renewed",
+        "feature_purchase",
+        "boost_used",
+        "super_like_used"
+      ],
+      "description": "Type of monetization event"
+    },
+    "event_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Date of event"
+    },
+    "from_tier": {
+      "type": "string",
+      "enum": [
+        "free",
+        "premium",
+        "pro",
+        "business",
+        "enterprise"
+      ],
+      "description": "Previous subscription tier"
+    },
+    "to_tier": {
+      "type": "string",
+      "enum": [
+        "free",
+        "premium",
+        "pro",
+        "business",
+        "enterprise"
+      ],
+      "description": "New subscription tier"
+    },
+    "days_since_signup_bucket": {
+      "type": "string",
+      "enum": [
+        "0-7",
+        "8-30",
+        "31-90",
+        "91-180",
+        "180+"
+      ],
+      "description": "Days since signup when event occurred"
+    },
+    "feature_name": {
+      "type": "string",
+      "description": "Feature purchased or used"
+    },
+    "conversion_source": {
+      "type": "string",
+      "enum": [
+        "paywall",
+        "settings",
+        "match_limit",
+        "feature_gate",
+        "promotion",
+        "other"
+      ],
+      "description": "Where conversion originated"
+    },
+    "had_matches_before": {
+      "type": "boolean",
+      "description": "User had matches before conversion"
+    },
+    "profile_type": {
+      "type": "string",
+      "enum": [
+        "founder",
+        "collaborator",
+        "investor",
+        "service_provider",
+        "accelerator"
+      ],
+      "description": "Profile type at conversion"
+    }
+  },
+  "required": [
+    "anon_id",
+    "event_type",
+    "event_date"
+  ]
+}

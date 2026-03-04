@@ -1,0 +1,54 @@
+{
+  "name": "TeamLink",
+  "type": "object",
+  "properties": {
+    "from_profile_id": {
+      "type": "string",
+      "description": "Profile initiating the link"
+    },
+    "to_profile_id": {
+      "type": "string",
+      "description": "Profile being linked to"
+    },
+    "relationship_type": {
+      "type": "string",
+      "enum": [
+        "cofounder",
+        "advisor",
+        "team_member",
+        "investor",
+        "mentor"
+      ],
+      "description": "Type of relationship"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "accepted",
+        "declined"
+      ],
+      "default": "pending",
+      "description": "Link request status"
+    },
+    "display_on_profile": {
+      "type": "boolean",
+      "default": true,
+      "description": "Show this link on public profile"
+    },
+    "start_date": {
+      "type": "string",
+      "format": "date",
+      "description": "When the collaboration started"
+    },
+    "notes": {
+      "type": "string",
+      "description": "Internal notes about the relationship"
+    }
+  },
+  "required": [
+    "from_profile_id",
+    "to_profile_id",
+    "relationship_type"
+  ]
+}

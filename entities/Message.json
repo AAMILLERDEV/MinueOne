@@ -1,0 +1,28 @@
+{
+  "name": "Message",
+  "type": "object",
+  "properties": {
+    "match_id": {
+      "type": "string",
+      "description": "Reference to the match"
+    },
+    "sender_profile_id": {
+      "type": "string",
+      "description": "Profile who sent the message"
+    },
+    "content": {
+      "type": "string",
+      "description": "Message content"
+    },
+    "is_read": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether message was read"
+    }
+  },
+  "required": [
+    "match_id",
+    "sender_profile_id",
+    "content"
+  ]
+}

@@ -1,0 +1,38 @@
+{
+  "name": "Match",
+  "type": "object",
+  "properties": {
+    "from_profile_id": {
+      "type": "string",
+      "description": "Profile who initiated interest"
+    },
+    "to_profile_id": {
+      "type": "string",
+      "description": "Profile being interested in"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "matched",
+        "declined"
+      ],
+      "default": "pending",
+      "description": "Match status"
+    },
+    "nda_sent": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether NDA was sent"
+    },
+    "nda_signed": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether NDA was signed"
+    }
+  },
+  "required": [
+    "from_profile_id",
+    "to_profile_id"
+  ]
+}

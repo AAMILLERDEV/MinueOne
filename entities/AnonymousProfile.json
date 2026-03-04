@@ -1,0 +1,160 @@
+{
+  "name": "AnonymousProfile",
+  "type": "object",
+  "properties": {
+    "anon_id": {
+      "type": "string",
+      "description": "Hashed anonymous identifier (not reversible to user)"
+    },
+    "age_range": {
+      "type": "string",
+      "enum": [
+        "18-24",
+        "25-34",
+        "35-44",
+        "45-54",
+        "55-64",
+        "65+",
+        "undisclosed"
+      ],
+      "description": "Bucketed age range"
+    },
+    "gender": {
+      "type": "string",
+      "enum": [
+        "male",
+        "female",
+        "non_binary",
+        "other",
+        "undisclosed"
+      ],
+      "description": "User-defined gender category"
+    },
+    "metro_area": {
+      "type": "string",
+      "description": "City or metro area (no precise location)"
+    },
+    "country": {
+      "type": "string",
+      "description": "Country code"
+    },
+    "education_level": {
+      "type": "string",
+      "enum": [
+        "high_school",
+        "some_college",
+        "bachelors",
+        "masters",
+        "doctorate",
+        "trade_school",
+        "undisclosed"
+      ],
+      "description": "Education level"
+    },
+    "industry": {
+      "type": "string",
+      "enum": [
+        "tech",
+        "finance",
+        "healthcare",
+        "education",
+        "retail",
+        "manufacturing",
+        "consulting",
+        "legal",
+        "media",
+        "nonprofit",
+        "government",
+        "other",
+        "undisclosed"
+      ],
+      "description": "Industry sector"
+    },
+    "profile_type": {
+      "type": "string",
+      "enum": [
+        "founder",
+        "collaborator",
+        "investor",
+        "service_provider",
+        "accelerator"
+      ],
+      "description": "Profile type for segmentation"
+    },
+    "collaboration_intent": {
+      "type": "string",
+      "enum": [
+        "cofounder",
+        "advisor",
+        "employee",
+        "investor_seeking",
+        "service_client",
+        "networking",
+        "undisclosed"
+      ],
+      "description": "Primary collaboration intent"
+    },
+    "experience_years_bucket": {
+      "type": "string",
+      "enum": [
+        "0-2",
+        "3-5",
+        "6-10",
+        "11-20",
+        "20+",
+        "undisclosed"
+      ],
+      "description": "Years of experience bucketed"
+    },
+    "startup_experience_level": {
+      "type": "string",
+      "enum": [
+        "none",
+        "early_employee",
+        "cofounder",
+        "serial_founder",
+        "exited",
+        "undisclosed"
+      ],
+      "description": "Startup experience level"
+    },
+    "subscription_tier": {
+      "type": "string",
+      "enum": [
+        "free",
+        "premium",
+        "pro",
+        "business",
+        "enterprise"
+      ],
+      "description": "Subscription tier at time of collection"
+    },
+    "consent_analytics": {
+      "type": "boolean",
+      "default": false,
+      "description": "Consented to analytics collection"
+    },
+    "consent_research": {
+      "type": "boolean",
+      "default": false,
+      "description": "Consented to research use"
+    },
+    "consent_third_party": {
+      "type": "boolean",
+      "default": false,
+      "description": "Consented to anonymized third-party sharing"
+    },
+    "first_seen_date": {
+      "type": "string",
+      "format": "date",
+      "description": "First activity date (no time)"
+    },
+    "cohort_month": {
+      "type": "string",
+      "description": "YYYY-MM cohort for analysis"
+    }
+  },
+  "required": [
+    "anon_id"
+  ]
+}

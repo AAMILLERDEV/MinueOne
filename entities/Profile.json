@@ -1,0 +1,377 @@
+{
+  "name": "Profile",
+  "type": "object",
+  "properties": {
+    "user_id": {
+      "type": "string",
+      "description": "Reference to the user"
+    },
+    "profile_type": {
+      "type": "string",
+      "enum": [
+        "founder",
+        "collaborator",
+        "accelerator",
+        "service_provider",
+        "investor",
+        "event_organizer"
+      ],
+      "description": "Type of profile"
+    },
+    "is_company_profile": {
+      "type": "boolean",
+      "default": false
+    },
+    "display_name": {
+      "type": "string"
+    },
+    "avatar_url": {
+      "type": "string"
+    },
+    "bio": {
+      "type": "string"
+    },
+    "linkedin_url": {
+      "type": "string"
+    },
+    "website_url": {
+      "type": "string"
+    },
+    "location": {
+      "type": "string"
+    },
+    "latitude": {
+      "type": "number"
+    },
+    "longitude": {
+      "type": "number"
+    },
+    "remote_friendly": {
+      "type": "boolean",
+      "default": false
+    },
+    "languages": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "availability": {
+      "type": "string",
+      "enum": [
+        "full_time",
+        "part_time",
+        "advisor",
+        "project_based"
+      ]
+    },
+    "hours_per_week": {
+      "type": "number"
+    },
+    "collaboration_type": {
+      "type": "string",
+      "enum": [
+        "equity",
+        "paid",
+        "equity_paid",
+        "advisory"
+      ]
+    },
+    "looking_for": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "tags": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "verification_badges": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "last_active": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "stage": {
+      "type": "string",
+      "enum": [
+        "idea",
+        "discovery",
+        "validation",
+        "efficiency",
+        "scaling"
+      ]
+    },
+    "archetype": {
+      "type": "string",
+      "enum": [
+        "visionary",
+        "hacker",
+        "hustler",
+        "designer"
+      ]
+    },
+    "problem_statement": {
+      "type": "string"
+    },
+    "target_customer": {
+      "type": "string",
+      "enum": [
+        "b2b",
+        "b2c",
+        "smb",
+        "enterprise"
+      ]
+    },
+    "market_type": {
+      "type": "string",
+      "enum": [
+        "niche",
+        "growing",
+        "competitive"
+      ]
+    },
+    "help_needed": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "equity_range_min": {
+      "type": "number"
+    },
+    "equity_range_max": {
+      "type": "number"
+    },
+    "timeline_urgency": {
+      "type": "string",
+      "enum": [
+        "exploring",
+        "actively_building",
+        "fundraising_soon"
+      ]
+    },
+    "pitch_deck_url": {
+      "type": "string"
+    },
+    "primary_skills": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "secondary_skills": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "startup_experience": {
+      "type": "string",
+      "enum": [
+        "none",
+        "early_employee",
+        "cofounder",
+        "exit"
+      ]
+    },
+    "risk_tolerance": {
+      "type": "string",
+      "enum": [
+        "low",
+        "medium",
+        "high"
+      ]
+    },
+    "motivation": {
+      "type": "string",
+      "enum": [
+        "learning",
+        "building_wealth",
+        "solving_problem",
+        "networking"
+      ]
+    },
+    "preferred_archetype": {
+      "type": "string",
+      "enum": [
+        "visionary",
+        "hacker",
+        "hustler",
+        "designer",
+        "any"
+      ]
+    },
+    "open_to_cofounder": {
+      "type": "boolean",
+      "default": false
+    },
+    "investment_thesis": {
+      "type": "string"
+    },
+    "investment_stages": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "investment_industries": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "ticket_size_min": {
+      "type": "number"
+    },
+    "ticket_size_max": {
+      "type": "number"
+    },
+    "investment_instruments": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "geographic_focus": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "portfolio_highlights": {
+      "type": "string"
+    },
+    "office_hours_available": {
+      "type": "boolean",
+      "default": false
+    },
+    "open_to_intros": {
+      "type": "boolean",
+      "default": false
+    },
+    "service_types": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "service_stage_focus": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "free_intro_call": {
+      "type": "boolean",
+      "default": false
+    },
+    "startup_discounts": {
+      "type": "boolean",
+      "default": false
+    },
+    "past_clients": {
+      "type": "string"
+    },
+    "certifications": {
+      "type": "string"
+    },
+    "program_type": {
+      "type": "string",
+      "enum": [
+        "cohort",
+        "rolling",
+        "residency"
+      ]
+    },
+    "equity_taken": {
+      "type": "number"
+    },
+    "funding_offered": {
+      "type": "number"
+    },
+    "next_intake_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "focus_areas": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "benefits_offered": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "founder_match_facilitation": {
+      "type": "boolean",
+      "default": false
+    },
+    "event_name": {
+      "type": "string",
+      "description": "Event name (for event organizers)"
+    },
+    "event_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Event date (for event organizers)"
+    },
+    "event_description": {
+      "type": "string",
+      "description": "Event description"
+    },
+    "event_website": {
+      "type": "string",
+      "description": "Event website URL"
+    },
+    "expected_attendees": {
+      "type": "number",
+      "description": "Expected number of attendees"
+    },
+    "linked_event_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Events this profile is linked to as attendee"
+    },
+    "subscription_tier": {
+      "type": "string",
+      "enum": [
+        "free",
+        "premium",
+        "pro",
+        "business",
+        "enterprise"
+      ],
+      "default": "free"
+    },
+    "is_premium": {
+      "type": "boolean",
+      "default": false
+    },
+    "stealth_mode": {
+      "type": "boolean",
+      "default": false
+    },
+    "is_complete": {
+      "type": "boolean",
+      "default": false
+    }
+  },
+  "required": [
+    "user_id",
+    "profile_type",
+    "display_name"
+  ]
+}

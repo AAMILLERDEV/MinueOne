@@ -1,0 +1,135 @@
+{
+  "name": "EngagementMetrics",
+  "type": "object",
+  "properties": {
+    "anon_id": {
+      "type": "string",
+      "description": "Hashed anonymous identifier"
+    },
+    "metrics_period": {
+      "type": "string",
+      "description": "YYYY-MM period for metrics"
+    },
+    "total_swipes": {
+      "type": "number",
+      "default": 0,
+      "description": "Total swipe actions"
+    },
+    "like_rate": {
+      "type": "number",
+      "description": "Percentage of likes vs total swipes"
+    },
+    "match_rate": {
+      "type": "number",
+      "description": "Matches per 100 likes"
+    },
+    "avg_response_latency_bucket": {
+      "type": "string",
+      "enum": [
+        "<1h",
+        "1-4h",
+        "4-12h",
+        "12-24h",
+        "1-3d",
+        "3d+"
+      ],
+      "description": "Average message response time bucket"
+    },
+    "messages_sent": {
+      "type": "number",
+      "default": 0,
+      "description": "Total messages sent"
+    },
+    "conversations_started": {
+      "type": "number",
+      "default": 0,
+      "description": "Conversations initiated"
+    },
+    "avg_conversation_length_bucket": {
+      "type": "string",
+      "enum": [
+        "1-3",
+        "4-10",
+        "11-25",
+        "26-50",
+        "50+"
+      ],
+      "description": "Average messages per conversation bucket"
+    },
+    "avg_message_length_bucket": {
+      "type": "string",
+      "enum": [
+        "short",
+        "medium",
+        "long"
+      ],
+      "description": "Average message length category"
+    },
+    "emoji_usage_rate": {
+      "type": "string",
+      "enum": [
+        "none",
+        "low",
+        "medium",
+        "high"
+      ],
+      "description": "Emoji usage frequency"
+    },
+    "initiation_rate": {
+      "type": "number",
+      "description": "Percentage of conversations initiated"
+    },
+    "session_count": {
+      "type": "number",
+      "default": 0,
+      "description": "Number of sessions"
+    },
+    "avg_session_length_bucket": {
+      "type": "string",
+      "enum": [
+        "<2m",
+        "2-5m",
+        "5-15m",
+        "15-30m",
+        "30m+"
+      ],
+      "description": "Average session duration bucket"
+    },
+    "active_days": {
+      "type": "number",
+      "description": "Days with activity in period"
+    },
+    "peak_activity_time": {
+      "type": "string",
+      "enum": [
+        "morning",
+        "afternoon",
+        "evening",
+        "night"
+      ],
+      "description": "Most active time of day"
+    },
+    "peak_activity_day": {
+      "type": "string",
+      "enum": [
+        "weekday",
+        "weekend"
+      ],
+      "description": "Most active day type"
+    },
+    "meetings_scheduled": {
+      "type": "number",
+      "default": 0,
+      "description": "Meetings scheduled"
+    },
+    "meetings_completed": {
+      "type": "number",
+      "default": 0,
+      "description": "Meetings completed"
+    }
+  },
+  "required": [
+    "anon_id",
+    "metrics_period"
+  ]
+}

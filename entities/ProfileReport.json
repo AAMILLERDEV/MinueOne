@@ -1,0 +1,51 @@
+{
+  "name": "ProfileReport",
+  "type": "object",
+  "properties": {
+    "reporter_profile_id": {
+      "type": "string",
+      "description": "Profile reporting the issue"
+    },
+    "reported_profile_id": {
+      "type": "string",
+      "description": "Profile being reported"
+    },
+    "reason": {
+      "type": "string",
+      "enum": [
+        "fake_profile",
+        "harassment",
+        "spam",
+        "inappropriate_content",
+        "scam",
+        "impersonation",
+        "other"
+      ],
+      "description": "Reason for report"
+    },
+    "description": {
+      "type": "string",
+      "description": "Additional details"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "investigating",
+        "resolved",
+        "dismissed"
+      ],
+      "default": "pending",
+      "description": "Report status"
+    },
+    "action_taken": {
+      "type": "string",
+      "description": "Action taken by admin"
+    }
+  },
+  "required": [
+    "reporter_profile_id",
+    "reported_profile_id",
+    "reason"
+  ]
+}

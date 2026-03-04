@@ -1,0 +1,126 @@
+{
+  "name": "PsychographicSignal",
+  "type": "object",
+  "properties": {
+    "anon_id": {
+      "type": "string",
+      "description": "Hashed anonymous identifier"
+    },
+    "signal_period": {
+      "type": "string",
+      "description": "YYYY-MM period for signal collection"
+    },
+    "communication_style": {
+      "type": "string",
+      "enum": [
+        "direct",
+        "collaborative",
+        "analytical",
+        "expressive",
+        "undetermined"
+      ],
+      "description": "Inferred communication style from messaging patterns"
+    },
+    "decision_speed": {
+      "type": "string",
+      "enum": [
+        "fast",
+        "moderate",
+        "deliberate",
+        "undetermined"
+      ],
+      "description": "How quickly they make decisions (match responses, meeting scheduling)"
+    },
+    "risk_appetite_inferred": {
+      "type": "string",
+      "enum": [
+        "conservative",
+        "moderate",
+        "aggressive",
+        "undetermined"
+      ],
+      "description": "Inferred risk tolerance from behavior patterns"
+    },
+    "engagement_pattern": {
+      "type": "string",
+      "enum": [
+        "deep_diver",
+        "broad_explorer",
+        "targeted_seeker",
+        "passive_browser",
+        "undetermined"
+      ],
+      "description": "How they explore profiles and content"
+    },
+    "networking_style": {
+      "type": "string",
+      "enum": [
+        "connector",
+        "specialist",
+        "opportunist",
+        "relationship_builder",
+        "undetermined"
+      ],
+      "description": "Networking approach based on match patterns"
+    },
+    "response_consistency": {
+      "type": "string",
+      "enum": [
+        "highly_consistent",
+        "moderate",
+        "variable",
+        "undetermined"
+      ],
+      "description": "Consistency in response times and engagement"
+    },
+    "collaboration_preference": {
+      "type": "string",
+      "enum": [
+        "async_heavy",
+        "sync_heavy",
+        "balanced",
+        "undetermined"
+      ],
+      "description": "Preference for sync vs async communication"
+    },
+    "interest_breadth": {
+      "type": "string",
+      "enum": [
+        "narrow_focused",
+        "moderately_diverse",
+        "highly_diverse",
+        "undetermined"
+      ],
+      "description": "Diversity of profile types they engage with"
+    },
+    "momentum_indicator": {
+      "type": "string",
+      "enum": [
+        "accelerating",
+        "steady",
+        "decelerating",
+        "dormant",
+        "undetermined"
+      ],
+      "description": "Trend in engagement over time"
+    },
+    "quality_vs_quantity": {
+      "type": "string",
+      "enum": [
+        "quality_focused",
+        "quantity_focused",
+        "balanced",
+        "undetermined"
+      ],
+      "description": "Whether they focus on fewer deep connections or many surface ones"
+    },
+    "confidence_scores": {
+      "type": "string",
+      "description": "JSON string with confidence scores for each signal (0-1)"
+    }
+  },
+  "required": [
+    "anon_id",
+    "signal_period"
+  ]
+}

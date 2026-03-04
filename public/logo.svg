@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
+  <defs>
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Raleway:wght@400;600;700&amp;display=swap');
+    </style>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="2" stdDeviation="6" flood-color="#00000018"/>
+    </filter>
+    <radialGradient id="silverGrad" cx="38%" cy="35%" r="65%">
+      <stop offset="0%"   stop-color="#ffffff"/>
+      <stop offset="45%"  stop-color="#f0f2f5"/>
+      <stop offset="100%" stop-color="#d8dde6"/>
+    </radialGradient>
+  </defs>
+
+  <!-- Gradient circle with soft shadow -->
+  <circle cx="100" cy="100" r="88" fill="url(#silverGrad)" filter="url(#shadow)"/>
+
+  <!-- Blue ring -->
+  <circle cx="100" cy="100" r="88" fill="none" stroke="#2563eb" stroke-width="2.5" opacity="0.5"/>
+
+  <!-- "Minus" in slate grey -->
+  <text
+    x="44"
+    y="108"
+    font-family="'Raleway', -apple-system, BlinkMacSystemFont, sans-serif"
+    font-size="30"
+    font-weight="600"
+    letter-spacing="-0.5"
+    fill="#475569"
+  >Minus</text>
+
+  <!-- "ONE" rotated, each letter a different blue shade -->
+  <text
+    transform="translate(138, 110) rotate(-90)"
+    font-family="'Raleway', -apple-system, BlinkMacSystemFont, sans-serif"
+    font-size="12"
+    font-weight="800"
+    letter-spacing="1"
+  ><tspan fill="#93c5fd">O</tspan><tspan fill="#3b82f6">N</tspan><tspan fill="#1d4ed8">E</tspan></text>
+</svg>

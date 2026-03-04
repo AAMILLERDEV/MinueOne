@@ -1,0 +1,48 @@
+{
+  "name": "EventAttendee",
+  "type": "object",
+  "properties": {
+    "event_id": {
+      "type": "string",
+      "description": "Reference to the event"
+    },
+    "profile_id": {
+      "type": "string",
+      "description": "Matched platform profile ID (if found)"
+    },
+    "email": {
+      "type": "string",
+      "description": "Attendee email from uploaded list"
+    },
+    "linkedin_url": {
+      "type": "string",
+      "description": "Attendee LinkedIn URL from uploaded list"
+    },
+    "name": {
+      "type": "string",
+      "description": "Attendee name from uploaded list"
+    },
+    "is_matched": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether attendee matched a platform profile"
+    },
+    "has_linked": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether the profile has self-linked to the event"
+    },
+    "source": {
+      "type": "string",
+      "enum": [
+        "csv_upload",
+        "self_linked"
+      ],
+      "description": "How attendee was added"
+    }
+  },
+  "required": [
+    "event_id",
+    "source"
+  ]
+}

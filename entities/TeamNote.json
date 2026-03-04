@@ -1,0 +1,35 @@
+{
+  "name": "TeamNote",
+  "type": "object",
+  "properties": {
+    "profile_id": {
+      "type": "string",
+      "description": "Profile who created the note"
+    },
+    "about_profile_id": {
+      "type": "string",
+      "description": "Profile the note is about"
+    },
+    "content": {
+      "type": "string",
+      "description": "Note content"
+    },
+    "is_shared": {
+      "type": "boolean",
+      "default": false,
+      "description": "Shared with linked team members"
+    },
+    "tags": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Tags for organization"
+    }
+  },
+  "required": [
+    "profile_id",
+    "about_profile_id",
+    "content"
+  ]
+}

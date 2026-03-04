@@ -1,0 +1,64 @@
+{
+  "name": "AggregatedInsight",
+  "type": "object",
+  "properties": {
+    "insight_type": {
+      "type": "string",
+      "enum": [
+        "daily_active_users",
+        "match_rate_by_segment",
+        "conversion_funnel",
+        "engagement_benchmark",
+        "content_performance",
+        "feature_adoption",
+        "retention_cohort",
+        "revenue_metrics",
+        "behavioral_trend"
+      ],
+      "description": "Type of aggregated insight"
+    },
+    "period": {
+      "type": "string",
+      "description": "YYYY-MM-DD or YYYY-MM period"
+    },
+    "segment_dimension": {
+      "type": "string",
+      "description": "Segmentation dimension (profile_type, age_range, etc.)"
+    },
+    "segment_value": {
+      "type": "string",
+      "description": "Segment value"
+    },
+    "metric_name": {
+      "type": "string",
+      "description": "Name of the metric"
+    },
+    "metric_value": {
+      "type": "number",
+      "description": "Numeric value"
+    },
+    "sample_size": {
+      "type": "number",
+      "description": "Number of users in sample (must be >10 for privacy)"
+    },
+    "confidence_level": {
+      "type": "string",
+      "enum": [
+        "low",
+        "medium",
+        "high"
+      ],
+      "description": "Statistical confidence"
+    },
+    "metadata": {
+      "type": "string",
+      "description": "JSON string with additional context"
+    }
+  },
+  "required": [
+    "insight_type",
+    "period",
+    "metric_name",
+    "metric_value"
+  ]
+}

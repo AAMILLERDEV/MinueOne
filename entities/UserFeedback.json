@@ -1,0 +1,48 @@
+{
+  "name": "UserFeedback",
+  "type": "object",
+  "properties": {
+    "profile_id": {
+      "type": "string",
+      "description": "Profile submitting feedback"
+    },
+    "feedback_type": {
+      "type": "string",
+      "enum": [
+        "bug",
+        "feature_request",
+        "complaint",
+        "praise",
+        "other"
+      ],
+      "description": "Type of feedback"
+    },
+    "subject": {
+      "type": "string",
+      "description": "Feedback subject"
+    },
+    "content": {
+      "type": "string",
+      "description": "Feedback content"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "reviewed",
+        "resolved"
+      ],
+      "default": "pending",
+      "description": "Feedback status"
+    },
+    "admin_notes": {
+      "type": "string",
+      "description": "Admin response notes"
+    }
+  },
+  "required": [
+    "profile_id",
+    "feedback_type",
+    "content"
+  ]
+}

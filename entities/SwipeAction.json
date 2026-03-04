@@ -1,0 +1,27 @@
+{
+  "name": "SwipeAction",
+  "type": "object",
+  "properties": {
+    "from_profile_id": {
+      "type": "string",
+      "description": "Profile who swiped"
+    },
+    "to_profile_id": {
+      "type": "string",
+      "description": "Profile being swiped on"
+    },
+    "action": {
+      "type": "string",
+      "enum": [
+        "like",
+        "pass"
+      ],
+      "description": "Swipe action"
+    }
+  },
+  "required": [
+    "from_profile_id",
+    "to_profile_id",
+    "action"
+  ]
+}
