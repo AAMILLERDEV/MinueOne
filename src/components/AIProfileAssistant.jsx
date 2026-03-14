@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { base44 } from '@/api/base44Client';
+import { minus1 } from '@/api/minus1Client';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Sparkles, Loader2, RefreshCw, Check, Lock, Wand2, MessageSquare, Target, Briefcase, Zap } from 'lucide-react';
 import { Button } from "@/components/ui/button";
@@ -25,7 +25,7 @@ export default function AIProfileAssistant({ profile, setProfile, isPremium = fa
     setLoading(true);
     setDraftResult(null);
     try {
-      const result = await base44.integrations.Core.InvokeLLM({
+      const result = await minus1.integrations.Core.InvokeLLM({
         prompt: `You are an expert profile writer for Minus1, a startup networking platform. Generate a compelling draft profile for a ${profile.profile_type || 'user'}.
 
 User Inputs:
@@ -135,7 +135,7 @@ Stage: ${profile.stage || 'Not specified'}
 User's additional context: ${userInput || 'None provided'}
       `;
 
-      const response = await base44.integrations.Core.InvokeLLM({
+      const response = await minus1.integrations.Core.InvokeLLM({
         prompt: `You are helping a ${profile.profile_type} create their profile for a startup matching platform called Minus1.
 
 Context about the user:

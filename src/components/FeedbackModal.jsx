@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { base44 } from '@/api/base44Client';
+import { minus1 } from '@/api/minus1Client';
 import { MessageSquarePlus, Loader2, CheckCircle } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -40,7 +40,7 @@ export default function FeedbackModal({ isOpen, onClose, myProfileId }) {
     
     setSubmitting(true);
     try {
-      await base44.entities.UserFeedback.create({
+      await minus1.entities.UserFeedback.create({
         profile_id: myProfileId,
         feedback_type: feedbackType,
         subject,

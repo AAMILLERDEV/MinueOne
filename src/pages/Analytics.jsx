@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { base44 } from '@/api/base44Client';
+import { minus1 } from '@/api/minus1Client';
 import { useNavigate } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { motion } from 'framer-motion';
@@ -34,8 +34,8 @@ export default function Analytics() {
 
   const loadData = async () => {
     try {
-      const user = await base44.auth.me();
-      const profiles = await base44.entities.Profile.filter({ user_id: user.id });
+      const user = await minus1.auth.me();
+      const profiles = await minus1.entities.Profile.filter({ user_id: user.id });
       
       if (!profiles.length) {
         navigate(createPageUrl('Onboarding'));
@@ -59,24 +59,24 @@ export default function Analytics() {
   const loadAnalytics = async (profile) => {
     try {
       // Load swipe actions
-      const mySwipes = await base44.entities.SwipeAction.filter({ from_profile_id: profile.id });
-      const swipesOnMe = await base44.entities.SwipeAction.filter({ to_profile_id: profile.id });
+      const mySwipes = await minus1.entities.SwipeAction.filter({ from_profile_id: profile.id });
+      const swipesOnMe = await minus1.entities.SwipeAction.filter({ to_profile_id: profile.id });
       
       // Load matches
-      const myMatches = await base44.entities.Match.filter({ from_profile_id: profile.id, status: 'matched' });
-      const matchesWithMe = await base44.entities.Match.filter({ to_profile_id: profile.id, status: 'matched' });
+      const myMatches = await minus1.entities.Match.filter({ from_profile_id: profile.id, status: 'matched' });
+      const matchesWithMe = await minus1.entities.Match.filter({ to_profile_id: profile.id, status: 'matched' });
       const totalMatches = myMatches.length + matchesWithMe.length;
 
       // Load messages
       const allMessages = [];
       for (const match of [...myMatches, ...matchesWithMe]) {
-        const messages = await base44.entities.Message.filter({ match_id: match.id });
+        const messages = await minus1.entities.Message.filter({ match_id: match.id });
         allMessages.push(...messages);
       }
 
       // Load meetings
-      const meetings = await base44.entities.Meeting.filter({ organizer_profile_id: profile.id });
-      const meetingsAttending = await base44.entities.Meeting.filter({ attendee_profile_id: profile.id });
+      const meetings = await minus1.entities.Meeting.filter({ organizer_profile_id: profile.id });
+      const meetingsAttending = await minus1.entities.Meeting.filter({ attendee_profile_id: profile.id });
 
       // Calculate stats
       const likes = mySwipes.filter(s => s.action === 'like').length;
@@ -112,7 +112,7 @@ export default function Analytics() {
       setEngagementData(last7Days);
 
       // Match breakdown by type
-      const allProfiles = await base44.entities.Profile.filter({ is_complete: true });
+      const allProfiles = await minus1.entities.Profile.filter({ is_complete: true });
       const matchedProfileIds = [...myMatches, ...matchesWithMe].map(m => 
         m.from_profile_id === profile.id ? m.to_profile_id : m.from_profile_id
       );
@@ -126,7 +126,7 @@ export default function Analytics() {
       setMatchData(Object.entries(typeBreakdown).map(([name, value]) => ({ name, value })));
 
       // Load AI insights
-      const matchInsights = await base44.entities.MatchInsight.filter({ profile_id: profile.id });
+      const matchInsights = await minus1.entities.MatchInsight.filter({ profile_id: profile.id });
       setInsights(matchInsights.slice(0, 5));
 
     } catch (error) {

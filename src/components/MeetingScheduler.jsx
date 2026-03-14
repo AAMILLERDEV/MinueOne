@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { base44 } from '@/api/base44Client';
+import { minus1 } from '@/api/minus1Client';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Calendar, Clock, MapPin, Video, Phone, Users, X, Check, Loader2 } from 'lucide-react';
 import { Button } from "@/components/ui/button";
@@ -39,7 +39,7 @@ export default function MeetingScheduler({ isOpen, onClose, matchId, myProfile, 
   }, [isOpen, matchId]);
 
   const loadMeetings = async () => {
-    const allMeetings = await base44.entities.Meeting.filter({ match_id: matchId });
+    const allMeetings = await minus1.entities.Meeting.filter({ match_id: matchId });
     setMeetings(allMeetings);
   };
 
@@ -50,7 +50,7 @@ export default function MeetingScheduler({ isOpen, onClose, matchId, myProfile, 
     try {
       const scheduledDateTime = new Date(`${meeting.scheduled_date}T${meeting.scheduled_time}`);
       
-      await base44.entities.Meeting.create({
+      await minus1.entities.Meeting.create({
         match_id: matchId,
         organizer_profile_id: myProfile.id,
         attendee_profile_id: otherProfile.id,
@@ -73,7 +73,7 @@ export default function MeetingScheduler({ isOpen, onClose, matchId, myProfile, 
   };
 
   const handleRespondToMeeting = async (meetingId, status) => {
-    await base44.entities.Meeting.update(meetingId, { status });
+    await minus1.entities.Meeting.update(meetingId, { status });
     loadMeetings();
   };
 

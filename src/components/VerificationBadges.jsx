@@ -1,6 +1,6 @@
 import React from 'react';
 import { Badge } from "@/components/ui/badge";
-import { CheckCircle2, Linkedin, Mail, Building2, Banknote, Shield } from 'lucide-react';
+import { CheckCircle2, Linkedin, Mail, XCircle } from 'lucide-react';
 
 const badgeConfig = {
   linkedin_verified: {
@@ -13,21 +13,6 @@ const badgeConfig = {
     icon: Mail,
     color: 'bg-green-100 text-green-700 border-green-200'
   },
-  accelerator_backed: {
-    label: 'Accelerator Backed',
-    icon: Building2,
-    color: 'bg-amber-100 text-amber-700 border-amber-200'
-  },
-  previously_funded: {
-    label: 'Previously Funded',
-    icon: Banknote,
-    color: 'bg-violet-100 text-violet-700 border-violet-200'
-  },
-  identity_verified: {
-    label: 'ID Verified',
-    icon: Shield,
-    color: 'bg-emerald-100 text-emerald-700 border-emerald-200'
-  }
 };
 
 export default function VerificationBadges({ badges = [], size = 'default', showLabels = true }) {
@@ -68,9 +53,18 @@ export default function VerificationBadges({ badges = [], size = 'default', show
   );
 }
 
-export function VerificationStatus({ profile }) {
-  const totalBadges = Object.keys(badgeConfig).length;
-  const earnedBadges = profile?.verification_badges?.length || 0;
+export function VerificationStatus({ profile, user }) {
+  // Derive verification state from Supabase auth user
+  const emailVerified = !!user?.email_confirmed_at;
+  const linkedinVerified = user?.identities?.some(i => i.provider === 'linkedin_oidc') ?? false;
+
+  const statuses = {
+    email_verified: emailVerified,
+    linkedin_verified: linkedinVerified,
+  };
+
+  const earnedBadges = Object.values(statuses).filter(Boolean).length;
+  const totalBadges = Object.keys(statuses).length;
   const percentage = Math.round((earnedBadges / totalBadges) * 100);
 
   return (
@@ -79,9 +73,9 @@ export function VerificationStatus({ profile }) {
         <h4 className="font-medium text-sm text-slate-900">Profile Verification</h4>
         <span className="text-sm text-slate-500">{earnedBadges}/{totalBadges} verified</span>
       </div>
-      
+
       <div className="h-2 bg-slate-200 rounded-full overflow-hidden mb-3">
-        <div 
+        <div
           className="h-full bg-gradient-to-r from-blue-500 to-cyan-500 transition-all"
           style={{ width: `${percentage}%` }}
         />
@@ -90,8 +84,8 @@ export function VerificationStatus({ profile }) {
       <div className="space-y-2">
         {Object.entries(badgeConfig).map(([id, config]) => {
           const Icon = config.icon;
-          const isVerified = profile?.verification_badges?.includes(id);
-          
+          const isVerified = statuses[id];
+
           return (
             <div key={id} className="flex items-center justify-between">
               <div className="flex items-center gap-2">
@@ -103,7 +97,7 @@ export function VerificationStatus({ profile }) {
               {isVerified ? (
                 <CheckCircle2 className="w-4 h-4 text-green-600" />
               ) : (
-                <span className="text-xs text-blue-600 cursor-pointer hover:underline">Verify</span>
+                <XCircle className="w-4 h-4 text-slate-300" />
               )}
             </div>
           );

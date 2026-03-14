@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { base44 } from '@/api/base44Client';
+import { minus1 } from '@/api/minus1Client';
 import { motion, AnimatePresence } from 'framer-motion';
 import { CalendarDays, Search, Link2, CheckCircle2, Loader2, Users, X } from 'lucide-react';
 import { Button } from "@/components/ui/button";
@@ -20,12 +20,12 @@ export default function EventLink({ myProfile, onLinkedEventsChange }) {
   const loadEvents = async () => {
     setLoading(true);
     try {
-      const allEvents = await base44.entities.Event.filter({ is_active: true, is_verified: true });
+      const allEvents = await minus1.entities.Event.filter({ is_active: true, is_verified: true });
       setEvents(allEvents);
 
       // Find events this user already linked to
       if (myProfile?.id) {
-        const myLinks = await base44.entities.EventAttendee.filter({ profile_id: myProfile.id });
+        const myLinks = await minus1.entities.EventAttendee.filter({ profile_id: myProfile.id });
         setLinkedEventIds(new Set(myLinks.map(l => l.event_id)));
       }
     } catch (e) {
@@ -41,14 +41,14 @@ export default function EventLink({ myProfile, onLinkedEventsChange }) {
     try {
       if (linkedEventIds.has(event.id)) {
         // Unlink
-        const existing = await base44.entities.EventAttendee.filter({ event_id: event.id, profile_id: myProfile.id });
+        const existing = await minus1.entities.EventAttendee.filter({ event_id: event.id, profile_id: myProfile.id });
         for (const ea of existing) {
-          await base44.entities.EventAttendee.delete(ea.id);
+          await minus1.entities.EventAttendee.delete(ea.id);
         }
         setLinkedEventIds(prev => { const s = new Set(prev); s.delete(event.id); return s; });
       } else {
         // Link
-        await base44.entities.EventAttendee.create({
+        await minus1.entities.EventAttendee.create({
           event_id: event.id,
           profile_id: myProfile.id,
           email: myProfile.email || '',

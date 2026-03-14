@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { base44 } from '@/api/base44Client';
+import { minus1 } from '@/api/minus1Client';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Loader2, Sparkles, Bot, ChevronDown, ChevronUp, Clock, MessageSquare, Users, RefreshCw, Lock, Crown, Zap } from 'lucide-react';
 import { Button } from "@/components/ui/button";
@@ -36,12 +36,12 @@ export default function NetworkingAssistant() {
 
   const loadData = async () => {
     try {
-      const user = await base44.auth.me();
-      const profiles = await base44.entities.Profile.filter({ user_id: user.id });
+      const user = await minus1.auth.me();
+      const profiles = await minus1.entities.Profile.filter({ user_id: user.id });
       if (!profiles.length) { navigate(createPageUrl('Onboarding')); return; }
       setMyProfile(profiles[0]);
 
-      const all = await base44.entities.Profile.list('-last_active', 50);
+      const all = await minus1.entities.Profile.list('-last_active', 50);
       setAllProfiles(all.filter(p => p.id !== profiles[0].id && p.is_complete));
     } catch (e) {
       console.error(e);
@@ -99,7 +99,7 @@ export default function NetworkingAssistant() {
         last_active: p.last_active,
       }));
 
-      const result = await base44.integrations.Core.InvokeLLM({
+      const result = await minus1.integrations.Core.InvokeLLM({
         prompt: `You are an expert startup networking AI for the Minus1 platform. Analyze the user's profile and suggest the most strategically valuable connections — not just obvious matches, but also cross-type connections (e.g. a founder connecting with an accelerator, or a collaborator connecting with an investor for future opportunities).
 
 User Profile:

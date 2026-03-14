@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { base44 } from '@/api/base44Client';
+import { minus1 } from '@/api/minus1Client';
 import { motion } from 'framer-motion';
 import { Sparkles, Loader2, ChevronRight, Lock } from 'lucide-react';
 import { Button } from "@/components/ui/button";
@@ -48,7 +48,7 @@ export default function AIRecommendations({ myProfile, profiles, onViewProfile }
         looking_for: myProfile.looking_for
       };
 
-      const response = await base44.integrations.Core.InvokeLLM({
+      const response = await minus1.integrations.Core.InvokeLLM({
         prompt: `You are a startup matchmaking AI. Analyze these profiles and recommend the top 3 best matches for the user.
 
 User Profile:

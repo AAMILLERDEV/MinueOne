@@ -3,7 +3,7 @@ import Anthropic from '@anthropic-ai/sdk';
 
 // ---------------------------------------------------------------------------
 // Entity compatibility layer
-// Mimics the Base44 entity API: .filter(), .list(), .create(), .update(), .delete()
+// Mimics the Minus1 entity API: .filter(), .list(), .create(), .update(), .delete()
 // ---------------------------------------------------------------------------
 
 function createEntityApi(tableName) {
@@ -144,11 +144,11 @@ const integrations = {
 };
 
 // ---------------------------------------------------------------------------
-// Exported base44 compatibility object — same shape as the Base44 SDK
+// Exported minus1 compatibility object — same shape as the Minus1 SDK
 // so all existing page/component imports continue to work unchanged.
 // ---------------------------------------------------------------------------
 
-export const base44 = {
+export const minus1 = {
   auth,
   entities: {
     Profile: createEntityApi('profiles'),
@@ -162,6 +162,10 @@ export const base44 = {
     TeamNote: createEntityApi('team_notes'),
     TeamLink: createEntityApi('team_links'),
     AnonymousProfile: createEntityApi('anonymous_profiles'),
+    FeedPost: createEntityApi('feed_posts'),
+    TeamGroupMessage: createEntityApi('team_group_messages'),
+    Team: createEntityApi('teams'),
+    TeamMember: createEntityApi('team_members'),
   },
   integrations,
   appLogs: {

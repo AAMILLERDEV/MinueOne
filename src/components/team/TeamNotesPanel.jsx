@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { base44 } from '@/api/base44Client';
+import { minus1 } from '@/api/minus1Client';
 import { motion } from 'framer-motion';
 import { StickyNote, Plus, Trash2, Share2, Loader2 } from 'lucide-react';
 import { Button } from "@/components/ui/button";
@@ -22,7 +22,7 @@ export default function TeamNotesPanel({ myProfile, aboutProfileId, aboutProfile
 
   const loadNotes = async () => {
     try {
-      const myNotes = await base44.entities.TeamNote.filter({
+      const myNotes = await minus1.entities.TeamNote.filter({
         profile_id: myProfile.id,
         about_profile_id: aboutProfileId
       });
@@ -39,7 +39,7 @@ export default function TeamNotesPanel({ myProfile, aboutProfileId, aboutProfile
 
     setSaving(true);
     try {
-      const note = await base44.entities.TeamNote.create({
+      const note = await minus1.entities.TeamNote.create({
         profile_id: myProfile.id,
         about_profile_id: aboutProfileId,
         content: newNote,
@@ -58,7 +58,7 @@ export default function TeamNotesPanel({ myProfile, aboutProfileId, aboutProfile
 
   const deleteNote = async (noteId) => {
     try {
-      await base44.entities.TeamNote.delete(noteId);
+      await minus1.entities.TeamNote.delete(noteId);
       setNotes(prev => prev.filter(n => n.id !== noteId));
     } catch (error) {
       console.error('Error deleting note:', error);

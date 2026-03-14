@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { base44 } from '@/api/base44Client';
+import { minus1 } from '@/api/minus1Client';
 import { Upload, Loader2, CheckCircle2, AlertCircle, Users, Download } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -20,10 +20,10 @@ export default function AttendeeUploader({ eventId, onComplete }) {
 
     try {
       // Upload file
-      const { file_url } = await base44.integrations.Core.UploadFile({ file });
+      const { file_url } = await minus1.integrations.Core.UploadFile({ file });
 
       // Extract attendee data
-      const extracted = await base44.integrations.Core.ExtractDataFromUploadedFile({
+      const extracted = await minus1.integrations.Core.ExtractDataFromUploadedFile({
         file_url,
         json_schema: {
           type: "object",
@@ -51,7 +51,7 @@ export default function AttendeeUploader({ eventId, onComplete }) {
       const attendees = extracted.output?.attendees || [];
 
       // Load all profiles for matching
-      const allProfiles = await base44.entities.Profile.list();
+      const allProfiles = await minus1.entities.Profile.list();
       const emailMap = {};
       const linkedinMap = {};
       allProfiles.forEach(p => {
@@ -89,11 +89,11 @@ export default function AttendeeUploader({ eventId, onComplete }) {
 
       // Bulk create
       if (attendeeRecords.length > 0) {
-        await base44.entities.EventAttendee.bulkCreate(attendeeRecords);
+        await minus1.entities.EventAttendee.bulkCreate(attendeeRecords);
       }
 
       // Update event counts
-      await base44.entities.Event.update(eventId, {
+      await minus1.entities.Event.update(eventId, {
         total_attendee_count: attendees.length,
         matched_attendee_count: matched,
         attendee_csv_url: file_url

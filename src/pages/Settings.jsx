@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { base44 } from '@/api/base44Client';
+import { minus1 } from '@/api/minus1Client';
 import { useNavigate } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { motion } from 'framer-motion';
-import { Loader2, Upload, MapPin, Crown, EyeOff, Check, LogOut } from 'lucide-react';
+import { Loader2, Upload, MapPin, Crown, EyeOff, Eye, Check, LogOut, ShieldAlert, BarChart3, Lock } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -22,6 +22,7 @@ export default function Settings() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [profile, setProfile] = useState(null);
+  const [user, setUser] = useState(null);
   const [showFeedback, setShowFeedback] = useState(false);
 
   useEffect(() => {
@@ -30,14 +31,15 @@ export default function Settings() {
 
   const loadProfile = async () => {
     try {
-      const user = await base44.auth.me();
-      const profiles = await base44.entities.Profile.filter({ user_id: user.id });
-      
+      const user = await minus1.auth.me();
+      setUser(user);
+      const profiles = await minus1.entities.Profile.filter({ user_id: user.id });
+
       if (!profiles.length) {
         navigate(createPageUrl('Onboarding'));
         return;
       }
-      
+
       setProfile(profiles[0]);
     } catch (error) {
       console.error('Error loading profile:', error);
@@ -49,10 +51,11 @@ export default function Settings() {
   const handleImageUpload = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
-    
+
     try {
-      const { file_url } = await base44.integrations.Core.UploadFile({ file });
+      const { file_url } = await minus1.integrations.Core.UploadFile({ file });
       setProfile(p => ({ ...p, avatar_url: file_url }));
+      await minus1.entities.Profile.update(profile.id, { avatar_url: file_url });
     } catch (error) {
       console.error('Error uploading image:', error);
     }
@@ -96,7 +99,7 @@ export default function Settings() {
   const handleSave = async () => {
     setSaving(true);
     try {
-      await base44.entities.Profile.update(profile.id, profile);
+      await minus1.entities.Profile.update(profile.id, profile);
     } catch (error) {
       console.error('Error saving profile:', error);
     } finally {
@@ -105,7 +108,7 @@ export default function Settings() {
   };
 
   const handleLogout = () => {
-    base44.auth.logout();
+    minus1.auth.logout();
   };
 
   if (loading) {
@@ -119,7 +122,18 @@ export default function Settings() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 pb-24">
       <div className="max-w-lg mx-auto px-4 py-6">
-        <h1 className="text-2xl font-bold text-slate-900 mb-6">Settings</h1>
+        <div className="flex items-center justify-between mb-6">
+          <h1 className="text-2xl font-bold text-slate-900">Settings</h1>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => navigate(`${createPageUrl('PublicProfile')}?profileId=${profile.id}`)}
+            className="gap-1.5 text-slate-600"
+          >
+            <Eye className="w-4 h-4" />
+            View Profile
+          </Button>
+        </div>
 
         <div className="space-y-6">
           {/* Premium Card */}
@@ -277,7 +291,7 @@ export default function Settings() {
               <CardDescription>Verified profiles get more matches and build trust</CardDescription>
             </CardHeader>
             <CardContent>
-              <VerificationStatus profile={profile} />
+              <VerificationStatus profile={profile} user={user} />
             </CardContent>
           </Card>
 
@@ -331,8 +345,37 @@ export default function Settings() {
             Send Feedback
           </Button>
 
+          {/* Profile Analytics */}
+          <Button
+            variant="outline"
+            onClick={() => navigate(createPageUrl('Analytics'))}
+            className="w-full relative"
+          >
+            <BarChart3 className="w-4 h-4 text-purple-500 mr-2" />
+            Profile Analytics
+            <span className="absolute right-3">
+              {profile.is_premium || ['premium', 'pro', 'business', 'enterprise'].includes(profile.subscription_tier) ? (
+                <Crown className="w-4 h-4 text-amber-500" />
+              ) : (
+                <Lock className="w-4 h-4 text-slate-400" />
+              )}
+            </span>
+          </Button>
+
+          {/* Admin Panel (admins only) */}
+          {profile.is_admin && (
+            <Button
+              variant="outline"
+              onClick={() => navigate(createPageUrl('Admin'))}
+              className="w-full border-red-200 text-red-600 hover:bg-red-50"
+            >
+              <ShieldAlert className="w-4 h-4 mr-2" />
+              Admin Panel
+            </Button>
+          )}
+
           {/* Logout */}
-          <Button 
+          <Button
             variant="outline"
             onClick={handleLogout}
             className="w-full text-slate-600"

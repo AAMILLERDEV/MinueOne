@@ -1,4 +1,4 @@
-import { base44 } from '@/api/base44Client';
+import { minus1 } from '@/api/minus1Client';
 
 // Generate anonymous ID from user ID (one-way hash simulation)
 const generateAnonId = (userId) => {
@@ -58,9 +58,9 @@ export const AnalyticsService = {
   // Check if user has consented
   async hasConsent(consentType = 'analytics') {
     try {
-      const user = await base44.auth.me();
+      const user = await minus1.auth.me();
       const anonId = generateAnonId(user.id);
-      const profiles = await base44.entities.AnonymousProfile.filter({ anon_id: anonId });
+      const profiles = await minus1.entities.AnonymousProfile.filter({ anon_id: anonId });
       if (profiles.length === 0) return false;
       
       switch (consentType) {
@@ -77,10 +77,10 @@ export const AnalyticsService = {
   // Initialize anonymous profile
   async initializeAnonymousProfile(profile, consents = {}) {
     try {
-      const user = await base44.auth.me();
+      const user = await minus1.auth.me();
       const anonId = generateAnonId(user.id);
       
-      const existing = await base44.entities.AnonymousProfile.filter({ anon_id: anonId });
+      const existing = await minus1.entities.AnonymousProfile.filter({ anon_id: anonId });
       
       const anonData = {
         anon_id: anonId,
@@ -94,9 +94,9 @@ export const AnalyticsService = {
       };
 
       if (existing.length > 0) {
-        await base44.entities.AnonymousProfile.update(existing[0].id, anonData);
+        await minus1.entities.AnonymousProfile.update(existing[0].id, anonData);
       } else {
-        await base44.entities.AnonymousProfile.create(anonData);
+        await minus1.entities.AnonymousProfile.create(anonData);
       }
     } catch (error) {
       console.error('Analytics init error:', error);
@@ -109,12 +109,12 @@ export const AnalyticsService = {
       const hasConsent = await this.hasConsent('analytics');
       if (!hasConsent) return;
 
-      const user = await base44.auth.me();
+      const user = await minus1.auth.me();
       const anonId = generateAnonId(user.id);
-      const profiles = await base44.entities.AnonymousProfile.filter({ anon_id: anonId });
+      const profiles = await minus1.entities.AnonymousProfile.filter({ anon_id: anonId });
       
       if (profiles.length > 0) {
-        await base44.entities.AnonymousProfile.update(profiles[0].id, demographics);
+        await minus1.entities.AnonymousProfile.update(profiles[0].id, demographics);
       }
     } catch (error) {
       console.error('Demographics update error:', error);
@@ -127,11 +127,11 @@ export const AnalyticsService = {
       const hasConsent = await this.hasConsent('analytics');
       if (!hasConsent) return;
 
-      const user = await base44.auth.me();
+      const user = await minus1.auth.me();
       const anonId = generateAnonId(user.id);
       const now = new Date();
 
-      await base44.entities.BehaviorEvent.create({
+      await minus1.entities.BehaviorEvent.create({
         anon_id: anonId,
         event_type: eventType,
         event_date: now.toISOString().split('T')[0],
@@ -198,11 +198,11 @@ export const AnalyticsService = {
       const hasConsent = await this.hasConsent('analytics');
       if (!hasConsent) return;
 
-      const user = await base44.auth.me();
+      const user = await minus1.auth.me();
       const anonId = generateAnonId(user.id);
-      const profiles = await base44.entities.AnonymousProfile.filter({ anon_id: anonId });
+      const profiles = await minus1.entities.AnonymousProfile.filter({ anon_id: anonId });
       
-      await base44.entities.MonetizationEvent.create({
+      await minus1.entities.MonetizationEvent.create({
         anon_id: anonId,
         event_type: eventType,
         event_date: new Date().toISOString().split('T')[0],
@@ -217,12 +217,12 @@ export const AnalyticsService = {
   // Update consent settings
   async updateConsent(consents) {
     try {
-      const user = await base44.auth.me();
+      const user = await minus1.auth.me();
       const anonId = generateAnonId(user.id);
-      const profiles = await base44.entities.AnonymousProfile.filter({ anon_id: anonId });
+      const profiles = await minus1.entities.AnonymousProfile.filter({ anon_id: anonId });
       
       if (profiles.length > 0) {
-        await base44.entities.AnonymousProfile.update(profiles[0].id, {
+        await minus1.entities.AnonymousProfile.update(profiles[0].id, {
           consent_analytics: consents.analytics ?? profiles[0].consent_analytics,
           consent_research: consents.research ?? profiles[0].consent_research,
           consent_third_party: consents.third_party ?? profiles[0].consent_third_party
@@ -236,9 +236,9 @@ export const AnalyticsService = {
   // Get current consent status
   async getConsentStatus() {
     try {
-      const user = await base44.auth.me();
+      const user = await minus1.auth.me();
       const anonId = generateAnonId(user.id);
-      const profiles = await base44.entities.AnonymousProfile.filter({ anon_id: anonId });
+      const profiles = await minus1.entities.AnonymousProfile.filter({ anon_id: anonId });
       
       if (profiles.length > 0) {
         return {

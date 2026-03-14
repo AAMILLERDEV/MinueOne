@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { base44 } from '@/api/base44Client';
+import { minus1 } from '@/api/minus1Client';
+import { supabase } from '@/api/supabaseClient';
 import { useNavigate } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { motion } from 'framer-motion';
@@ -9,9 +10,11 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import MeetingScheduler from '@/components/MeetingScheduler';
 import { canContactProfile, CorporateContactBlockedBanner, isCorporateProfile } from '@/components/CorporatePaywall';
+import { useUnread } from '@/lib/UnreadContext';
 
 export default function Chat() {
   const navigate = useNavigate();
+  const { markMatchRead } = useUnread();
   const [loading, setLoading] = useState(true);
   const [myProfile, setMyProfile] = useState(null);
   const [match, setMatch] = useState(null);
@@ -33,6 +36,29 @@ export default function Chat() {
     scrollToBottom();
   }, [messages]);
 
+  // Realtime subscription for incoming messages
+  useEffect(() => {
+    if (!matchId) return;
+    const channel = supabase
+      .channel(`messages:${matchId}`)
+      .on('postgres_changes', {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'messages',
+        filter: `match_id=eq.${matchId}`,
+      }, (payload) => {
+        setMessages(prev => {
+          // Avoid duplicates (our own optimistic message may already be there)
+          if (prev.some(m => m.id === payload.new.id)) return prev;
+          return [...prev, payload.new];
+        });
+        // Chat is open — keep it marked as read
+        markMatchRead(matchId);
+      })
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [matchId]);
+
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
@@ -44,8 +70,8 @@ export default function Chat() {
     }
 
     try {
-      const user = await base44.auth.me();
-      const myProfiles = await base44.entities.Profile.filter({ user_id: user.id });
+      const user = await minus1.auth.me();
+      const myProfiles = await minus1.entities.Profile.filter({ user_id: user.id });
       
       if (!myProfiles.length) {
         navigate(createPageUrl('Onboarding'));
@@ -55,7 +81,7 @@ export default function Chat() {
       setMyProfile(myProfiles[0]);
       
       // Load match
-      const allMatches = await base44.entities.Match.filter({ status: 'matched' });
+      const allMatches = await minus1.entities.Match.filter({ status: 'matched' });
       const foundMatch = allMatches.find(m => m.id === matchId);
       
       if (!foundMatch) {
@@ -70,13 +96,14 @@ export default function Chat() {
         ? foundMatch.to_profile_id 
         : foundMatch.from_profile_id;
       
-      const allProfiles = await base44.entities.Profile.list();
+      const allProfiles = await minus1.entities.Profile.list();
       const other = allProfiles.find(p => p.id === otherId);
       setOtherProfile(other);
       
       // Load messages
-      const allMessages = await base44.entities.Message.filter({ match_id: matchId }, 'created_date');
+      const allMessages = await minus1.entities.Message.filter({ match_id: matchId }, 'created_date');
       setMessages(allMessages);
+      markMatchRead(matchId);
       
     } catch (error) {
       console.error('Error loading chat:', error);
@@ -87,19 +114,25 @@ export default function Chat() {
 
   const handleSend = async () => {
     if (!newMessage.trim() || sending) return;
-    
+
+    const content = newMessage.trim();
     setSending(true);
+    setNewMessage('');
+
     try {
-      await base44.entities.Message.create({
+      const created = await minus1.entities.Message.create({
         match_id: matchId,
         sender_profile_id: myProfile.id,
-        content: newMessage.trim()
+        content,
       });
-      
-      setNewMessage('');
-      loadData(); // Reload messages
+      // Add optimistically; realtime will deduplicate if it fires too
+      setMessages(prev => {
+        if (prev.some(m => m.id === created.id)) return prev;
+        return [...prev, created];
+      });
     } catch (error) {
       console.error('Error sending message:', error);
+      setNewMessage(content); // Restore on failure
     } finally {
       setSending(false);
     }
@@ -116,7 +149,7 @@ export default function Chat() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 flex flex-col">
       {/* Header */}
-      <div className="bg-white border-b border-slate-200 px-4 py-3 flex items-center gap-3">
+      <div className="sticky top-0 z-10 bg-white border-b border-slate-200 px-4 py-3 flex items-center gap-3">
         <Button 
           variant="ghost" 
           size="icon"

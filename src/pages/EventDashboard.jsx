@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { base44 } from '@/api/base44Client';
+import { minus1 } from '@/api/minus1Client';
 import { useNavigate } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { motion } from 'framer-motion';
@@ -27,14 +27,14 @@ export default function EventDashboard() {
 
   const loadData = async () => {
     try {
-      const user = await base44.auth.me();
-      const profiles = await base44.entities.Profile.filter({ user_id: user.id });
+      const user = await minus1.auth.me();
+      const profiles = await minus1.entities.Profile.filter({ user_id: user.id });
       if (!profiles.length || profiles[0].profile_type !== 'event_organizer') {
         navigate(createPageUrl('Discover'));
         return;
       }
       setMyProfile(profiles[0]);
-      const myEvents = await base44.entities.Event.filter({ organizer_profile_id: profiles[0].id });
+      const myEvents = await minus1.entities.Event.filter({ organizer_profile_id: profiles[0].id });
       setEvents(myEvents);
     } catch (e) {
       console.error(e);
@@ -47,7 +47,7 @@ export default function EventDashboard() {
     if (!newEvent.name || !newEvent.event_date || !myProfile) return;
     setSaving(true);
     try {
-      const evt = await base44.entities.Event.create({
+      const evt = await minus1.entities.Event.create({
         ...newEvent,
         organizer_profile_id: myProfile.id,
         is_verified: false,

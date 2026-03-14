@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { base44 } from '@/api/base44Client';
+import { minus1 } from '@/api/minus1Client';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Linkedin, Building2, Loader2, CheckCircle2, AlertCircle, ArrowRight, Shield, Mail, ExternalLink } from 'lucide-react';
 import { Button } from "@/components/ui/button";
@@ -37,7 +37,7 @@ export default function LinkedInImport({ onImportComplete, onSkip }) {
     setError(null);
 
     try {
-      const response = await base44.integrations.Core.InvokeLLM({
+      const response = await minus1.integrations.Core.InvokeLLM({
         prompt: `Extract profile information from this LinkedIn URL for a startup matching platform. 
 URL: ${linkedinUrl}
 Profile type: ${mode === 'personal' ? 'Individual professional' : 'Company page'}

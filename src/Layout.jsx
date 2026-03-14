@@ -1,22 +1,24 @@
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { useAuth } from '@/lib/AuthContext';
+import { useUnread } from '@/lib/UnreadContext';
 import { motion } from 'framer-motion';
-import { Compass, MessageCircle, Settings, BarChart3, Bot } from 'lucide-react';
+import { Compass, MessageCircle, Settings, BarChart3, Rss, Users } from 'lucide-react';
 
 const navItems = [
   { name: 'Discover', icon: Compass, page: 'Discover' },
   { name: 'Matches', icon: MessageCircle, page: 'Matches' },
-  { name: 'Network', icon: Bot, page: 'NetworkingAssistant' },
-  { name: 'Analytics', icon: BarChart3, page: 'Analytics' },
+  { name: 'Feed', icon: Rss, page: 'Feed' },
+  { name: 'Team', icon: Users, page: 'Team' },
   { name: 'Settings', icon: Settings, page: 'Settings' },
 ];
 
 export default function Layout({ children, currentPageName }) {
   const { isAuthenticated } = useAuth();
+  const { unreadCount, teamUnreadCount } = useUnread();
 
   // Pages that don't show navigation
-  const hideNav = ['Home', 'Onboarding', 'Chat', 'Login'].includes(currentPageName);
+  const hideNav = ['Home', 'Onboarding', 'Chat', 'Login', 'PublicProfile', 'ResetPassword'].includes(currentPageName);
 
   if (hideNav) {
     return <>{children}</>;
@@ -46,6 +48,16 @@ export default function Layout({ children, currentPageName }) {
                         layoutId="activeTab"
                         className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 bg-blue-600 rounded-full"
                       />
+                    )}
+                    {item.name === 'Matches' && unreadCount > 0 && (
+                      <span className="absolute -top-1.5 -right-1.5 min-w-[16px] h-4 bg-red-500 text-white rounded-full text-[10px] font-bold flex items-center justify-center px-0.5">
+                        {unreadCount > 9 ? '9+' : unreadCount}
+                      </span>
+                    )}
+                    {item.name === 'Team' && teamUnreadCount > 0 && (
+                      <span className="absolute -top-1.5 -right-1.5 min-w-[16px] h-4 bg-red-500 text-white rounded-full text-[10px] font-bold flex items-center justify-center px-0.5">
+                        {teamUnreadCount > 9 ? '9+' : teamUnreadCount}
+                      </span>
                     )}
                   </div>
                   <span className={`text-xs mt-1 ${isActive ? 'text-blue-600 font-medium' : 'text-slate-400'}`}>

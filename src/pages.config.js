@@ -57,6 +57,11 @@ import Onboarding from './pages/Onboarding';
 import Settings from './pages/Settings';
 import NetworkingAssistant from './pages/NetworkingAssistant';
 import EventDashboard from './pages/EventDashboard';
+import Feed from './pages/Feed';
+import Admin from './pages/Admin';
+import Team from './pages/Team';
+import PublicProfile from './pages/PublicProfile';
+import ResetPassword from './pages/ResetPassword';
 import __Layout from './Layout.jsx';
 
 
@@ -71,6 +76,11 @@ export const PAGES = {
     "Settings": Settings,
     "NetworkingAssistant": NetworkingAssistant,
     "EventDashboard": EventDashboard,
+    "Feed": Feed,
+    "Admin": Admin,
+    "Team": Team,
+    "PublicProfile": PublicProfile,
+    "ResetPassword": ResetPassword,
 }
 
 export const pagesConfig = {

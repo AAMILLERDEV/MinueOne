@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { base44 } from '@/api/base44Client';
+import { minus1 } from '@/api/minus1Client';
 import { useNavigate } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -98,8 +98,8 @@ export default function Onboarding() {
 
   const loadExistingProfile = async () => {
     try {
-      const user = await base44.auth.me();
-      const profiles = await base44.entities.Profile.filter({ user_id: user.id });
+      const user = await minus1.auth.me();
+      const profiles = await minus1.entities.Profile.filter({ user_id: user.id });
       if (profiles.length > 0) {
         setExistingProfile(profiles[0]);
         setProfile(p => ({ ...p, ...profiles[0] }));
@@ -117,7 +117,7 @@ export default function Onboarding() {
     if (!file) return;
     
     try {
-      const { file_url } = await base44.integrations.Core.UploadFile({ file });
+      const { file_url } = await minus1.integrations.Core.UploadFile({ file });
       setProfile(p => ({ ...p, avatar_url: file_url }));
     } catch (error) {
       console.error('Error uploading image:', error);
@@ -153,13 +153,13 @@ export default function Onboarding() {
   const handleSave = async () => {
     setLoading(true);
     try {
-      const user = await base44.auth.me();
-      const profileData = { ...profile, user_id: user.id, is_complete: true, last_active: new Date().toISOString() };
+      const user = await minus1.auth.me();
+      const profileData = { ...profile, user_id: user.id, email: user.email, is_complete: true, last_active: new Date().toISOString() };
       
       if (existingProfile) {
-        await base44.entities.Profile.update(existingProfile.id, profileData);
+        await minus1.entities.Profile.update(existingProfile.id, profileData);
       } else {
-        await base44.entities.Profile.create(profileData);
+        await minus1.entities.Profile.create(profileData);
       }
       
       // Initialize analytics with consent (non-blocking — don't let this delay navigation)

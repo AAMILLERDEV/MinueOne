@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { base44 } from '@/api/base44Client';
+import { minus1 } from '@/api/minus1Client';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Users, UserPlus, Link2, Check, X, Loader2, Search, Lock } from 'lucide-react';
 import { Button } from "@/components/ui/button";
@@ -52,8 +52,8 @@ export default function TeamLinkManager({ myProfile, isPremium = false, onUpgrad
   const loadLinks = async () => {
     try {
       const [outgoing, incoming] = await Promise.all([
-        base44.entities.TeamLink.filter({ from_profile_id: myProfile.id }),
-        base44.entities.TeamLink.filter({ to_profile_id: myProfile.id })
+        minus1.entities.TeamLink.filter({ from_profile_id: myProfile.id }),
+        minus1.entities.TeamLink.filter({ to_profile_id: myProfile.id })
       ]);
 
       const acceptedLinks = [...outgoing, ...incoming].filter(l => l.status === 'accepted');
@@ -68,7 +68,7 @@ export default function TeamLinkManager({ myProfile, isPremium = false, onUpgrad
       );
       
       if (profileIds.length > 0) {
-        const allProfiles = await base44.entities.Profile.filter({ is_complete: true });
+        const allProfiles = await minus1.entities.Profile.filter({ is_complete: true });
         setLinkedProfiles(allProfiles.filter(p => profileIds.includes(p.id)));
       }
     } catch (error) {
@@ -86,7 +86,7 @@ export default function TeamLinkManager({ myProfile, isPremium = false, onUpgrad
 
     setSearching(true);
     try {
-      const profiles = await base44.entities.Profile.filter({ is_complete: true });
+      const profiles = await minus1.entities.Profile.filter({ is_complete: true });
       const existingLinkIds = links.map(l => 
         l.from_profile_id === myProfile.id ? l.to_profile_id : l.from_profile_id
       );
@@ -108,7 +108,7 @@ export default function TeamLinkManager({ myProfile, isPremium = false, onUpgrad
   const sendLinkRequest = async (targetProfile) => {
     setSendingRequest(targetProfile.id);
     try {
-      await base44.entities.TeamLink.create({
+      await minus1.entities.TeamLink.create({
         from_profile_id: myProfile.id,
         to_profile_id: targetProfile.id,
         relationship_type: selectedRelationship,
@@ -127,7 +127,7 @@ export default function TeamLinkManager({ myProfile, isPremium = false, onUpgrad
 
   const handleRequest = async (link, accept) => {
     try {
-      await base44.entities.TeamLink.update(link.id, {
+      await minus1.entities.TeamLink.update(link.id, {
         status: accept ? 'accepted' : 'declined'
       });
       
@@ -140,7 +140,7 @@ export default function TeamLinkManager({ myProfile, isPremium = false, onUpgrad
 
   const removeLink = async (link) => {
     try {
-      await base44.entities.TeamLink.delete(link.id);
+      await minus1.entities.TeamLink.delete(link.id);
       setLinks(prev => prev.filter(l => l.id !== link.id));
       setLinkedProfiles(prev => {
         const removedId = link.from_profile_id === myProfile.id ? link.to_profile_id : link.from_profile_id;
@@ -346,7 +346,7 @@ function PendingRequestCard({ request, onAccept, onDecline }) {
   }, [request]);
 
   const loadProfile = async () => {
-    const profiles = await base44.entities.Profile.filter({ is_complete: true });
+    const profiles = await minus1.entities.Profile.filter({ is_complete: true });
     setProfile(profiles.find(p => p.id === request.from_profile_id));
   };
 

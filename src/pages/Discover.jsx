@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { base44 } from '@/api/base44Client';
+import { minus1 } from '@/api/minus1Client';
 import { useNavigate } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -53,8 +53,8 @@ export default function Discover() {
 
   const loadData = async () => {
     try {
-      const user = await base44.auth.me();
-      const myProfiles = await base44.entities.Profile.filter({ user_id: user.id });
+      const user = await minus1.auth.me();
+      const myProfiles = await minus1.entities.Profile.filter({ user_id: user.id });
       
       if (!myProfiles.length || !myProfiles[0].is_complete) {
         navigate(createPageUrl('Onboarding'));
@@ -75,10 +75,10 @@ export default function Discover() {
   const loadProfiles = async (profile) => {
     try {
       // Get all profiles of types I'm looking for
-      const fetchedProfiles = await base44.entities.Profile.filter({ is_complete: true });
+      const fetchedProfiles = await minus1.entities.Profile.filter({ is_complete: true });
       
       // Get my swipe history
-      const mySwipes = await base44.entities.SwipeAction.filter({ from_profile_id: profile.id });
+      const mySwipes = await minus1.entities.SwipeAction.filter({ from_profile_id: profile.id });
       const swipedIds = new Set(mySwipes.map(s => s.to_profile_id));
       
       // Filter profiles (base filtering)
@@ -118,7 +118,7 @@ export default function Discover() {
       return;
     }
     setActiveEventId(eventId);
-    const attendees = await base44.entities.EventAttendee.filter({ event_id: eventId, is_matched: true });
+    const attendees = await minus1.entities.EventAttendee.filter({ event_id: eventId, is_matched: true });
     const ids = new Set(attendees.map(a => a.profile_id).filter(Boolean));
     setEventAttendeeProfileIds(ids);
   };
@@ -218,7 +218,7 @@ export default function Discover() {
     setProfileViewStart(Date.now());
     
     // Save swipe action
-    await base44.entities.SwipeAction.create({
+    await minus1.entities.SwipeAction.create({
       from_profile_id: myProfile.id,
       to_profile_id: targetProfile.id,
       action: action
@@ -230,7 +230,7 @@ export default function Discover() {
     
     if (action === 'like') {
       // Check if they also liked me
-      const theirSwipes = await base44.entities.SwipeAction.filter({
+      const theirSwipes = await minus1.entities.SwipeAction.filter({
         from_profile_id: targetProfile.id,
         to_profile_id: myProfile.id,
         action: 'like'
@@ -238,7 +238,7 @@ export default function Discover() {
       
       if (theirSwipes.length > 0) {
         // Mutual interest - create pending match for the other party to accept
-        await base44.entities.Match.create({
+        await minus1.entities.Match.create({
           from_profile_id: myProfile.id,
           to_profile_id: targetProfile.id,
           status: 'pending'  // Requires acceptance
@@ -256,13 +256,13 @@ export default function Discover() {
     if (!lastSwipe) return;
     
     // Delete the swipe action
-    const swipes = await base44.entities.SwipeAction.filter({
+    const swipes = await minus1.entities.SwipeAction.filter({
       from_profile_id: myProfile.id,
       to_profile_id: lastSwipe.profile.id
     });
     
     for (const swipe of swipes) {
-      await base44.entities.SwipeAction.delete(swipe.id);
+      await minus1.entities.SwipeAction.delete(swipe.id);
     }
     
     setCurrentIndex(lastSwipe.index);
@@ -357,7 +357,7 @@ export default function Discover() {
         </div>
 
         {/* Card Stack */}
-        <div className="relative h-[600px] px-4">
+        <div className="relative h-[600px]">
           {currentProfiles.length > 0 ? (
             <AnimatePresence>
               {currentProfiles.map((profile, index) => (

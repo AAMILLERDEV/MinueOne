@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { base44 } from '@/api/base44Client';
+import { minus1 } from '@/api/minus1Client';
 import { Flag, Loader2, AlertTriangle } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -39,7 +39,7 @@ export default function ReportProfileModal({
     
     setSubmitting(true);
     try {
-      await base44.entities.ProfileReport.create({
+      await minus1.entities.ProfileReport.create({
         reporter_profile_id: myProfileId,
         reported_profile_id: reportedProfile.id,
         reason,

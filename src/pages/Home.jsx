@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { base44 } from '@/api/base44Client';
+import { minus1 } from '@/api/minus1Client';
 import { useNavigate } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { motion } from 'framer-motion';
@@ -16,11 +16,11 @@ export default function Home() {
 
   const checkAuth = async () => {
     try {
-      const isAuthenticated = await base44.auth.isAuthenticated();
+      const isAuthenticated = await minus1.auth.isAuthenticated();
       
       if (isAuthenticated) {
-        const user = await base44.auth.me();
-        const profiles = await base44.entities.Profile.filter({ user_id: user.id });
+        const user = await minus1.auth.me();
+        const profiles = await minus1.entities.Profile.filter({ user_id: user.id });
         
         if (profiles.length && profiles[0].is_complete) {
           navigate(createPageUrl('Discover'));
@@ -36,7 +36,7 @@ export default function Home() {
   };
 
   const handleGetStarted = () => {
-    base44.auth.redirectToLogin(createPageUrl('Onboarding'));
+    minus1.auth.redirectToLogin(createPageUrl('Onboarding'));
   };
 
   if (loading) {
@@ -145,7 +145,7 @@ export default function Home() {
           <p className="text-center text-sm text-blue-300">
             Already have an account?{' '}
             <button 
-              onClick={() => base44.auth.redirectToLogin(createPageUrl('Discover'))}
+              onClick={() => minus1.auth.redirectToLogin(createPageUrl('Discover'))}
               className="text-white font-medium hover:underline"
             >
               Sign in

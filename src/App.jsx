@@ -2,6 +2,7 @@ import { Toaster } from "@/components/ui/toaster"
 import { QueryClientProvider } from '@tanstack/react-query'
 import { queryClientInstance } from '@/lib/query-client'
 import NavigationTracker from '@/lib/NavigationTracker'
+import { UnreadProvider } from '@/lib/UnreadContext'
 import { pagesConfig } from './pages.config'
 import { BrowserRouter as Router, Route, Routes, useLocation } from 'react-router-dom';
 import PageNotFound from './lib/PageNotFound';
@@ -22,7 +23,8 @@ const AuthenticatedApp = () => {
   const location = useLocation();
 
   useEffect(() => {
-    if (!isLoadingAuth && authError?.type === 'auth_required' && location.pathname !== '/login') {
+    const publicPaths = ['/login', '/Login', '/ResetPassword'];
+    if (!isLoadingAuth && authError?.type === 'auth_required' && !publicPaths.includes(location.pathname)) {
       navigateToLogin();
     }
   }, [isLoadingAuth, authError, location.pathname]);
@@ -71,8 +73,10 @@ function App() {
     <QueryClientProvider client={queryClientInstance}>
       <Router>
         <AuthProvider>
-          <NavigationTracker />
-          <AuthenticatedApp />
+          <UnreadProvider>
+            <NavigationTracker />
+            <AuthenticatedApp />
+          </UnreadProvider>
         </AuthProvider>
       </Router>
       <Toaster />

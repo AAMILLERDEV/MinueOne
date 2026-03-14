@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { base44 } from '@/api/base44Client';
+import { minus1 } from '@/api/minus1Client';
 import { useNavigate } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { motion } from 'framer-motion';
@@ -10,6 +10,7 @@ import SafetyModal from '@/components/SafetyModal';
 import VerificationBadges from '@/components/VerificationBadges';
 import { canContactProfile, isCorporateProfile } from '@/components/CorporatePaywall';
 import DirectMessageButton from '@/components/DirectMessageButton';
+import { useUnread } from '@/lib/UnreadContext';
 
 const profileTypeConfig = {
   founder: { label: 'Founder', color: 'bg-indigo-100 text-indigo-700' },
@@ -22,6 +23,7 @@ const profileTypeConfig = {
 
 export default function Matches() {
   const navigate = useNavigate();
+  const { unreadByMatch } = useUnread();
   const [loading, setLoading] = useState(true);
   const [myProfile, setMyProfile] = useState(null);
   const [matches, setMatches] = useState([]);
@@ -35,8 +37,8 @@ export default function Matches() {
 
   const loadData = async () => {
     try {
-      const user = await base44.auth.me();
-      const myProfiles = await base44.entities.Profile.filter({ user_id: user.id });
+      const user = await minus1.auth.me();
+      const myProfiles = await minus1.entities.Profile.filter({ user_id: user.id });
       
       if (!myProfiles.length) {
         navigate(createPageUrl('Onboarding'));
@@ -46,7 +48,7 @@ export default function Matches() {
       setMyProfile(myProfiles[0]);
       
       // Load matches where I'm either from or to (both matched and pending)
-      const allMatches = await base44.entities.Match.list();
+      const allMatches = await minus1.entities.Match.list();
       const myMatches = allMatches.filter(m => 
         (m.from_profile_id === myProfiles[0].id || m.to_profile_id === myProfiles[0].id) &&
         (m.status === 'matched' || m.status === 'pending')
@@ -61,7 +63,7 @@ export default function Matches() {
         profileIds.add(m.to_profile_id);
       });
       
-      const allProfiles = await base44.entities.Profile.list();
+      const allProfiles = await minus1.entities.Profile.list();
       const profileMap = {};
       allProfiles.forEach(p => {
         if (profileIds.has(p.id)) {
@@ -86,7 +88,11 @@ export default function Matches() {
 
   const handleChatClick = (match) => {
     setSelectedMatch(match);
-    setShowSafetyModal(true);
+    if (myProfile?.safety_acknowledged) {
+      navigate(createPageUrl('Chat') + `?matchId=${match.id}`);
+    } else {
+      setShowSafetyModal(true);
+    }
   };
 
   const handleFindAccelerators = () => {
@@ -97,7 +103,7 @@ export default function Matches() {
   const handleSendNDA = async () => {
     if (!selectedMatch) return;
     
-    await base44.entities.Match.update(selectedMatch.id, {
+    await minus1.entities.Match.update(selectedMatch.id, {
       nda_sent: true
     });
     
@@ -112,7 +118,7 @@ export default function Matches() {
 
   const handleAcceptMatch = async (match) => {
     try {
-      await base44.entities.Match.update(match.id, { status: 'matched' });
+      await minus1.entities.Match.update(match.id, { status: 'matched' });
       loadData();
     } catch (error) {
       console.error('Error accepting match:', error);
@@ -121,7 +127,7 @@ export default function Matches() {
 
   const handleDeclineMatch = async (match) => {
     try {
-      await base44.entities.Match.update(match.id, { status: 'declined' });
+      await minus1.entities.Match.update(match.id, { status: 'declined' });
       setMatches(prev => prev.filter(m => m.id !== match.id));
     } catch (error) {
       console.error('Error declining match:', error);
@@ -132,7 +138,9 @@ export default function Matches() {
   const pendingRequests = matches.filter(m => 
     m.status === 'pending' && m.to_profile_id === myProfile?.id
   );
-  const confirmedMatches = matches.filter(m => m.status === 'matched');
+  const confirmedMatches = matches
+    .filter(m => m.status === 'matched')
+    .sort((a, b) => (unreadByMatch[b.id]?.count ?? 0) - (unreadByMatch[a.id]?.count ?? 0));
   const sentRequests = matches.filter(m => 
     m.status === 'pending' && m.from_profile_id === myProfile?.id
   );
@@ -282,28 +290,40 @@ export default function Matches() {
                     const profile = getMatchedProfile(match);
                     if (!profile) return null;
                     const config = profileTypeConfig[profile.profile_type];
-                    
+                    const unreadData = unreadByMatch[match.id];
+                    const unreadCount = unreadData?.count ?? 0;
+                    const unreadPreview = unreadData?.preview ?? '';
+                    const hasUnread = unreadCount > 0;
+
                     return (
                       <motion.div
                         key={match.id}
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: index * 0.05 }}
-                        className="bg-white rounded-xl p-4 shadow-sm border border-slate-100"
+                        className={`rounded-xl p-4 shadow-sm border transition-colors ${
+                          hasUnread
+                            ? 'bg-blue-50 border-blue-200'
+                            : 'bg-white border-slate-100'
+                        }`}
                       >
                         <div className="flex items-center gap-4">
-                          <div className="w-14 h-14 rounded-full overflow-hidden bg-slate-100 flex-shrink-0">
-                            {profile.avatar_url ? (
-                              <img src={profile.avatar_url} alt={profile.display_name} className="w-full h-full object-cover" />
-                            ) : (
-                              <div className="w-full h-full flex items-center justify-center text-slate-400 font-bold text-lg">
-                                {profile.display_name?.[0]}
-                              </div>
-                            )}
+                          <div className="flex-shrink-0">
+                            <div className="w-14 h-14 rounded-full overflow-hidden bg-slate-100">
+                              {profile.avatar_url ? (
+                                <img src={profile.avatar_url} alt={profile.display_name} className="w-full h-full object-cover" />
+                              ) : (
+                                <div className="w-full h-full flex items-center justify-center text-slate-400 font-bold text-lg">
+                                  {profile.display_name?.[0]}
+                                </div>
+                              )}
+                            </div>
                           </div>
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2 mb-1">
-                              <h3 className="font-semibold text-slate-900 truncate">{profile.display_name}</h3>
+                              <h3 className={`truncate ${hasUnread ? 'font-bold text-slate-900' : 'font-semibold text-slate-900'}`}>
+                                {profile.display_name}
+                              </h3>
                               {match.nda_sent && (
                                 <Badge variant="outline" className="text-xs border-amber-200 text-amber-700">
                                   <FileCheck className="w-3 h-3 mr-1" />NDA
@@ -311,6 +331,11 @@ export default function Matches() {
                               )}
                             </div>
                             <Badge className={`${config?.color} text-xs`}>{config?.label}</Badge>
+                            {hasUnread && (
+                              <p className="text-xs text-blue-600 font-medium mt-1 truncate max-w-[200px]">
+                                {unreadPreview}
+                              </p>
+                            )}
                             {profile.verification_badges?.length > 0 && (
                               <div className="mt-1">
                                 <VerificationBadges badges={profile.verification_badges} size="small" />
@@ -318,9 +343,20 @@ export default function Matches() {
                             )}
                           </div>
                           {canContactProfile(myProfile, profile) ? (
-                            <Button size="sm" onClick={() => handleChatClick(match)} className="bg-blue-600 hover:bg-blue-700">
-                              <MessageCircle className="w-4 h-4" />
-                            </Button>
+                            <div className="relative flex-shrink-0">
+                              <Button
+                                size="sm"
+                                onClick={() => handleChatClick(match)}
+                                className="bg-blue-600 hover:bg-blue-700"
+                              >
+                                <MessageCircle className="w-4 h-4" />
+                              </Button>
+                              {hasUnread && (
+                                <span className="absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] bg-red-500 text-white rounded-full text-[10px] font-bold flex items-center justify-center px-1 pointer-events-none">
+                                  {unreadCount > 99 ? '99+' : unreadCount}
+                                </span>
+                              )}
+                            </div>
                           ) : (
                             <Button size="sm" variant="outline" disabled className="text-slate-400">
                               <Lock className="w-4 h-4" />
@@ -339,8 +375,12 @@ export default function Matches() {
 
       <SafetyModal
         isOpen={showSafetyModal}
-        onClose={() => {
+        onClose={async () => {
           setShowSafetyModal(false);
+          if (!myProfile?.safety_acknowledged) {
+            await minus1.entities.Profile.update(myProfile.id, { safety_acknowledged: true });
+            setMyProfile(prev => ({ ...prev, safety_acknowledged: true }));
+          }
           handleOpenChat();
         }}
         onFindAccelerators={handleFindAccelerators}

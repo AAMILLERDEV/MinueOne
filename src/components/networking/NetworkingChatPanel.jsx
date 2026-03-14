@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { base44 } from '@/api/base44Client';
+import { minus1 } from '@/api/minus1Client';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Send, Bot, Loader2, Sparkles, Crown } from 'lucide-react';
 import { Button } from "@/components/ui/button";
@@ -58,7 +58,7 @@ export default function NetworkingChatPanel({ isOpen, onClose, myProfile, allPro
 
       const history = newMessages.slice(-6).map(m => `${m.role === 'user' ? 'User' : 'Assistant'}: ${m.content}`).join('\n\n');
 
-      const response = await base44.integrations.Core.InvokeLLM({
+      const response = await minus1.integrations.Core.InvokeLLM({
         prompt: `You are a smart, friendly AI networking advisor on the Minus1 startup platform. You help users network strategically, craft outreach messages, and build meaningful connections in the startup ecosystem.
 
 User's profile context:

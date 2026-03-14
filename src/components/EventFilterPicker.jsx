@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { base44 } from '@/api/base44Client';
+import { minus1 } from '@/api/minus1Client';
 import { CalendarDays, Check, Loader2 } from 'lucide-react';
 
 export default function EventFilterPicker({ myProfile, activeEventId, onSelect }) {
@@ -13,10 +13,10 @@ export default function EventFilterPicker({ myProfile, activeEventId, onSelect }
   const loadLinked = async () => {
     if (!myProfile?.id) { setLoading(false); return; }
     try {
-      const myLinks = await base44.entities.EventAttendee.filter({ profile_id: myProfile.id });
+      const myLinks = await minus1.entities.EventAttendee.filter({ profile_id: myProfile.id });
       if (myLinks.length === 0) { setLoading(false); return; }
       const eventIds = [...new Set(myLinks.map(l => l.event_id))];
-      const allEvents = await base44.entities.Event.filter({ is_active: true });
+      const allEvents = await minus1.entities.Event.filter({ is_active: true });
       setLinkedEvents(allEvents.filter(e => eventIds.includes(e.id)));
     } catch (e) {
       console.error(e);

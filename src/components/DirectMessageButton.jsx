@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { base44 } from '@/api/base44Client';
+import { minus1 } from '@/api/minus1Client';
 import { Mail, Loader2, Send, Crown } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -30,7 +30,7 @@ export default function DirectMessageButton({
     
     setSending(true);
     try {
-      await base44.entities.DirectMessage.create({
+      await minus1.entities.DirectMessage.create({
         from_profile_id: myProfile.id,
         to_profile_id: targetProfile.id,
         content: message
