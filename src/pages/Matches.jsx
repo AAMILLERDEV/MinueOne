@@ -11,6 +11,8 @@ import VerificationBadges from '@/components/VerificationBadges';
 import { canContactProfile, isCorporateProfile } from '@/components/CorporatePaywall';
 import DirectMessageButton from '@/components/DirectMessageButton';
 import { useUnread } from '@/lib/UnreadContext';
+import { Sparkles } from 'lucide-react';
+import GroupChatPanel from '@/components/GroupChatPanel';
 
 const profileTypeConfig = {
   founder: { label: 'Founder', color: 'bg-indigo-100 text-indigo-700' },
@@ -23,13 +25,14 @@ const profileTypeConfig = {
 
 export default function Matches() {
   const navigate = useNavigate();
-  const { unreadByMatch } = useUnread();
+  const { unreadByMatch, pendingRequestCount, refreshPendingRequests } = useUnread();
   const [loading, setLoading] = useState(true);
   const [myProfile, setMyProfile] = useState(null);
   const [matches, setMatches] = useState([]);
   const [matchProfiles, setMatchProfiles] = useState({});
   const [showSafetyModal, setShowSafetyModal] = useState(false);
   const [selectedMatch, setSelectedMatch] = useState(null);
+  const [activeTab, setActiveTab] = useState('matches'); // 'matches' | 'group-chat'
 
   useEffect(() => {
     loadData();
@@ -119,6 +122,7 @@ export default function Matches() {
   const handleAcceptMatch = async (match) => {
     try {
       await minus1.entities.Match.update(match.id, { status: 'matched' });
+      refreshPendingRequests();
       loadData();
     } catch (error) {
       console.error('Error accepting match:', error);
@@ -129,6 +133,7 @@ export default function Matches() {
     try {
       await minus1.entities.Match.update(match.id, { status: 'declined' });
       setMatches(prev => prev.filter(m => m.id !== match.id));
+      refreshPendingRequests();
     } catch (error) {
       console.error('Error declining match:', error);
     }
@@ -156,7 +161,56 @@ export default function Matches() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 pb-24">
       <div className="max-w-lg mx-auto px-4 py-6">
-        <h1 className="text-2xl font-bold text-slate-900 mb-6">Your Matches</h1>
+        <h1 className="text-2xl font-bold text-slate-900 mb-4">Matches</h1>
+
+        {/* Tab bar */}
+        <div className="flex gap-1 bg-slate-100 rounded-xl p-1 mb-5">
+          {[
+            { id: 'matches', label: 'Matches' },
+            { id: 'group-chat', label: 'Group Chat' },
+          ].map(tab => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={`flex-1 py-2 rounded-lg text-sm font-medium transition-all ${
+                activeTab === tab.id
+                  ? 'bg-white text-blue-600 shadow-sm'
+                  : 'text-slate-500 hover:text-slate-700'
+              }`}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+
+        {/* Group Chat tab */}
+        {activeTab === 'group-chat' && myProfile && (
+          <GroupChatPanel myProfile={myProfile} />
+        )}
+
+        {/* Matches tab content */}
+        {activeTab === 'matches' && <>
+
+        {/* Possible matches teaser — shown when there are incoming requests the user hasn't acted on */}
+        {pendingRequests.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.97 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="mb-5 bg-gradient-to-r from-blue-600 to-cyan-500 rounded-2xl px-5 py-4 flex items-center gap-3 shadow-md"
+          >
+            <Sparkles className="w-6 h-6 text-white flex-shrink-0" />
+            <div className="flex-1">
+              <p className="text-white font-bold text-base leading-tight">
+                {pendingRequests.length === 1
+                  ? '1 possible match waiting!'
+                  : `${pendingRequests.length} possible matches waiting!`}
+              </p>
+              <p className="text-blue-100 text-sm mt-0.5">
+                Someone's interested — see who below.
+              </p>
+            </div>
+          </motion.div>
+        )}
 
         {confirmedMatches.length === 0 && pendingRequests.length === 0 && sentRequests.length === 0 ? (
           <motion.div
@@ -371,6 +425,8 @@ export default function Matches() {
             )}
           </div>
         )}
+
+        </> /* end activeTab === 'matches' */}
       </div>
 
       <SafetyModal

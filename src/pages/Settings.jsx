@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { minus1 } from '@/api/minus1Client';
 import { useNavigate } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { motion } from 'framer-motion';
-import { Loader2, Upload, MapPin, Crown, EyeOff, Eye, Check, LogOut, ShieldAlert, BarChart3, Lock } from 'lucide-react';
+import { Loader2, Upload, MapPin, Crown, EyeOff, Eye, Check, LogOut, ShieldAlert, BarChart3, Lock, X, Building2, ChevronRight } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -11,10 +11,9 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import LookingForSelector from '@/components/LookingForSelector';
+import DiscoveryPreferencesEditor from '@/components/DiscoveryPreferencesEditor';
 import { VerificationStatus } from '@/components/VerificationBadges';
 import PrivacySettings from '@/components/analytics/PrivacySettings';
-import TeamLinkManager from '@/components/team/TeamLinkManager';
 import FeedbackModal from '@/components/FeedbackModal';
 
 export default function Settings() {
@@ -24,10 +23,43 @@ export default function Settings() {
   const [profile, setProfile] = useState(null);
   const [user, setUser] = useState(null);
   const [showFeedback, setShowFeedback] = useState(false);
+  const [activeSection, setActiveSection] = useState('section-profile');
+
+  const navSections = [
+    { id: 'section-profile',      label: 'Profile' },
+    { id: 'section-verification', label: 'Verification' },
+    { id: 'section-discovery',    label: 'Discovery' },
+    { id: 'section-team',         label: 'Company' },
+    { id: 'section-privacy',      label: 'Privacy' },
+    { id: 'section-account',      label: 'Account' },
+  ];
+
+  const scrollToSection = (id) => {
+    const el = document.getElementById(id);
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    setActiveSection(id);
+  };
 
   useEffect(() => {
     loadProfile();
   }, []);
+
+  useEffect(() => {
+    if (!profile) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) setActiveSection(entry.target.id);
+        });
+      },
+      { rootMargin: '-10% 0px -70% 0px' }
+    );
+    navSections.forEach(({ id }) => {
+      const el = document.getElementById(id);
+      if (el) observer.observe(el);
+    });
+    return () => observer.disconnect();
+  }, [profile]);
 
   const loadProfile = async () => {
     try {
@@ -87,13 +119,8 @@ export default function Settings() {
     }
   };
 
-  const toggleLookingFor = (id) => {
-    setProfile(p => ({
-      ...p,
-      looking_for: p.looking_for.includes(id)
-        ? p.looking_for.filter(i => i !== id)
-        : [...p.looking_for, id]
-    }));
+  const setLookingFor = (orderedTypes) => {
+    setProfile(p => ({ ...p, looking_for: orderedTypes }));
   };
 
   const handleSave = async () => {
@@ -121,8 +148,9 @@ export default function Settings() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 pb-24">
-      <div className="max-w-lg mx-auto px-4 py-6">
-        <div className="flex items-center justify-between mb-6">
+      {/* Header */}
+      <div className="max-w-lg mx-auto px-4 pt-6 pb-3">
+        <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold text-slate-900">Settings</h1>
           <Button
             variant="outline"
@@ -134,7 +162,30 @@ export default function Settings() {
             View Profile
           </Button>
         </div>
+      </div>
 
+      {/* Sticky section nav */}
+      <div className="sticky top-0 z-10 bg-slate-50/95 backdrop-blur-sm border-b border-slate-200">
+        <div className="max-w-lg mx-auto px-4">
+          <div className="flex gap-1 overflow-x-auto py-2 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+            {navSections.map(({ id, label }) => (
+              <button
+                key={id}
+                onClick={() => scrollToSection(id)}
+                className={`flex-shrink-0 px-3 py-1 rounded-full text-sm font-medium transition-colors ${
+                  activeSection === id
+                    ? 'bg-slate-900 text-white'
+                    : 'text-slate-500 hover:text-slate-900 hover:bg-slate-100'
+                }`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <div className="max-w-lg mx-auto px-4 py-6">
         <div className="space-y-6">
           {/* Premium Card */}
           {!profile.is_premium && (
@@ -199,11 +250,13 @@ export default function Settings() {
           )}
 
           {/* Profile Info */}
+          <div id="section-profile" className="scroll-mt-14">
           <Card>
             <CardHeader>
               <CardTitle>Profile Information</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
+
               {/* Avatar */}
               <div className="flex items-center gap-4">
                 <div className="w-20 h-20 rounded-full bg-slate-100 overflow-hidden flex-shrink-0">
@@ -231,13 +284,90 @@ export default function Settings() {
                 </div>
               </div>
 
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label>Full Name</Label>
+                  <Input
+                    value={profile.full_name || ''}
+                    onChange={(e) => setProfile(p => ({ ...p, full_name: e.target.value }))}
+                    placeholder="Your legal name"
+                    className="mt-1.5"
+                  />
+                </div>
+                <div>
+                  <Label>Display Name</Label>
+                  <Input
+                    value={profile.display_name || ''}
+                    onChange={(e) => setProfile(p => ({ ...p, display_name: e.target.value }))}
+                    placeholder="Shown publicly"
+                    className="mt-1.5"
+                  />
+                </div>
+              </div>
+
               <div>
-                <Label>Display Name</Label>
-                <Input
-                  value={profile.display_name}
-                  onChange={(e) => setProfile(p => ({ ...p, display_name: e.target.value }))}
-                  className="mt-1.5"
-                />
+                <Label>Profile Type</Label>
+                <select
+                  value={profile.profile_type || ''}
+                  onChange={(e) => setProfile(p => ({ ...p, profile_type: e.target.value }))}
+                  className="mt-1.5 w-full h-9 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                >
+                  <option value="">Select type…</option>
+                  <option value="founder">Founder</option>
+                  <option value="collaborator">Collaborator</option>
+                  <option value="investor">Investor</option>
+                  <option value="accelerator">Accelerator</option>
+                  <option value="service_provider">Service Provider</option>
+                  <option value="event_organizer">Event Organizer</option>
+                </select>
+              </div>
+
+              <div>
+                <Label>Industry</Label>
+                <select
+                  value={profile.industry || ''}
+                  onChange={(e) => setProfile(p => ({ ...p, industry: e.target.value }))}
+                  className="mt-1.5 w-full h-9 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                >
+                  <option value="">Select industry…</option>
+                  {[
+                    'AI / Machine Learning', 'B2B SaaS', 'CleanTech', 'Consumer',
+                    'Crypto / Web3', 'DeepTech', 'E-commerce', 'EdTech', 'Fintech',
+                    'Gaming', 'Healthcare', 'HR Tech', 'Legal Tech', 'Logistics',
+                    'MarTech', 'Media', 'PropTech', 'Social Impact', 'Other'
+                  ].map(ind => (
+                    <option key={ind} value={ind}>{ind}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <Label>Skills</Label>
+                <div className="flex flex-wrap gap-1.5 mt-2">
+                  {[
+                    'Software Development', 'Mobile Development', 'Data Science', 'AI/ML',
+                    'Product Management', 'UX/UI Design', 'Marketing', 'Sales',
+                    'Business Development', 'Finance', 'Legal', 'Operations',
+                    'Content Creation', 'Growth Hacking', 'DevOps', 'Fundraising'
+                  ].map(skill => {
+                    const selected = (profile.skills || []).includes(skill);
+                    return (
+                      <Badge
+                        key={skill}
+                        variant={selected ? 'default' : 'outline'}
+                        className={`cursor-pointer text-xs ${selected ? 'bg-blue-600 hover:bg-blue-700' : 'hover:border-slate-400'}`}
+                        onClick={() => setProfile(p => ({
+                          ...p,
+                          skills: selected
+                            ? (p.skills || []).filter(s => s !== skill)
+                            : [...(p.skills || []), skill]
+                        }))}
+                      >
+                        {skill}
+                      </Badge>
+                    );
+                  })}
+                </div>
               </div>
 
               <div>
@@ -245,6 +375,7 @@ export default function Settings() {
                 <Textarea
                   value={profile.bio || ''}
                   onChange={(e) => setProfile(p => ({ ...p, bio: e.target.value }))}
+                  placeholder="Tell others about yourself, your experience, and what you're looking for…"
                   className="mt-1.5 h-24"
                 />
               </div>
@@ -255,6 +386,7 @@ export default function Settings() {
                   <Input
                     value={profile.location || ''}
                     onChange={(e) => setProfile(p => ({ ...p, location: e.target.value }))}
+                    placeholder="City, Country"
                     className="flex-1"
                   />
                   <Button variant="outline" onClick={getLocation} type="button">
@@ -269,6 +401,7 @@ export default function Settings() {
                   <Input
                     value={profile.linkedin_url || ''}
                     onChange={(e) => setProfile(p => ({ ...p, linkedin_url: e.target.value }))}
+                    placeholder="linkedin.com/in/…"
                     className="mt-1.5"
                   />
                 </div>
@@ -277,14 +410,17 @@ export default function Settings() {
                   <Input
                     value={profile.website_url || ''}
                     onChange={(e) => setProfile(p => ({ ...p, website_url: e.target.value }))}
+                    placeholder="https://…"
                     className="mt-1.5"
                   />
                 </div>
               </div>
             </CardContent>
           </Card>
+          </div>
 
           {/* Profile Verification */}
+          <div id="section-verification" className="scroll-mt-14">
           <Card>
             <CardHeader>
               <CardTitle>Profile Verification</CardTitle>
@@ -294,95 +430,111 @@ export default function Settings() {
               <VerificationStatus profile={profile} user={user} />
             </CardContent>
           </Card>
+          </div>
 
-          {/* Looking For */}
+          {/* Looking For / Discovery Preferences */}
+          <div id="section-discovery" className="scroll-mt-14">
           <Card>
             <CardHeader>
-              <CardTitle>Looking For</CardTitle>
-              <CardDescription>Select the types of profiles you want to discover</CardDescription>
+              <CardTitle>Discovery Preferences</CardTitle>
+              <CardDescription>
+                Choose who you want to discover and drag to set your priority — higher-ranked types
+                appear more often in your feed.
+              </CardDescription>
             </CardHeader>
             <CardContent>
-              <LookingForSelector
-                selected={profile.looking_for || []}
-                onToggle={toggleLookingFor}
+              <DiscoveryPreferencesEditor
+                value={profile.looking_for || []}
+                onChange={setLookingFor}
               />
             </CardContent>
           </Card>
+          </div>
 
-          {/* Team Collaboration (Premium) */}
+          {/* Company */}
+          <div id="section-team" className="scroll-mt-14">
           <Card>
             <CardHeader>
-              <CardTitle>Team Collaboration</CardTitle>
-              <CardDescription>Link your co-founders, advisors, and team members</CardDescription>
+              <CardTitle>Company</CardTitle>
+              <CardDescription>Manage your company, team collaboration, and milestone checklist</CardDescription>
             </CardHeader>
             <CardContent>
-              <TeamLinkManager
-                myProfile={profile}
-                isPremium={profile.is_premium || ['premium', 'pro', 'business', 'enterprise'].includes(profile.subscription_tier)}
-                onUpgrade={() => setProfile(p => ({ ...p, is_premium: true }))}
-              />
+              <button
+                onClick={() => navigate(createPageUrl('Company'))}
+                className="w-full flex items-center gap-4 p-4 bg-gradient-to-r from-blue-50 to-cyan-50 border border-blue-200 rounded-xl hover:border-blue-400 transition-colors text-left"
+              >
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-600 to-cyan-500 flex items-center justify-center flex-shrink-0">
+                  <Building2 className="w-5 h-5 text-white" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="font-medium text-slate-900">Go to Company tab</p>
+                  <p className="text-sm text-slate-500">Create a company, manage employees, teams, and your milestone checklist</p>
+                </div>
+                <ChevronRight className="w-5 h-5 text-slate-400 flex-shrink-0" />
+              </button>
             </CardContent>
           </Card>
+          </div>
 
           {/* Privacy & Data Settings */}
-          <PrivacySettings />
+          <div id="section-privacy" className="scroll-mt-14">
+            <PrivacySettings />
+          </div>
 
-          {/* Save Button */}
-          <Button 
-            onClick={handleSave}
-            disabled={saving}
-            className="w-full bg-slate-900 hover:bg-slate-800"
-          >
-            {saving ? 'Saving...' : 'Save Changes'}
-          </Button>
+          {/* Account actions */}
+          <div id="section-account" className="scroll-mt-14 space-y-3">
+            <Button
+              onClick={handleSave}
+              disabled={saving}
+              className="w-full bg-slate-900 hover:bg-slate-800"
+            >
+              {saving ? 'Saving...' : 'Save Changes'}
+            </Button>
 
-          {/* Send Feedback */}
-          <Button 
-            variant="outline"
-            onClick={() => setShowFeedback(true)}
-            className="w-full text-blue-600 border-blue-200 hover:bg-blue-50"
-          >
-            Send Feedback
-          </Button>
-
-          {/* Profile Analytics */}
-          <Button
-            variant="outline"
-            onClick={() => navigate(createPageUrl('Analytics'))}
-            className="w-full relative"
-          >
-            <BarChart3 className="w-4 h-4 text-purple-500 mr-2" />
-            Profile Analytics
-            <span className="absolute right-3">
-              {profile.is_premium || ['premium', 'pro', 'business', 'enterprise'].includes(profile.subscription_tier) ? (
-                <Crown className="w-4 h-4 text-amber-500" />
-              ) : (
-                <Lock className="w-4 h-4 text-slate-400" />
-              )}
-            </span>
-          </Button>
-
-          {/* Admin Panel (admins only) */}
-          {profile.is_admin && (
             <Button
               variant="outline"
-              onClick={() => navigate(createPageUrl('Admin'))}
-              className="w-full border-red-200 text-red-600 hover:bg-red-50"
+              onClick={() => setShowFeedback(true)}
+              className="w-full text-blue-600 border-blue-200 hover:bg-blue-50"
             >
-              <ShieldAlert className="w-4 h-4 mr-2" />
-              Admin Panel
+              Send Feedback
             </Button>
-          )}
 
-          {/* Logout */}
-          <Button
-            variant="outline"
-            onClick={handleLogout}
-            className="w-full text-slate-600"
-          >
-            <LogOut className="w-4 h-4 mr-2" />
-            Log Out
-          </Button>
+            <Button
+              variant="outline"
+              onClick={() => navigate(createPageUrl('Analytics'))}
+              className="w-full relative"
+            >
+              <BarChart3 className="w-4 h-4 text-purple-500 mr-2" />
+              Profile Analytics
+              <span className="absolute right-3">
+                {profile.is_premium || ['premium', 'pro', 'business', 'enterprise'].includes(profile.subscription_tier) ? (
+                  <Crown className="w-4 h-4 text-amber-500" />
+                ) : (
+                  <Lock className="w-4 h-4 text-slate-400" />
+                )}
+              </span>
+            </Button>
+
+            {profile.is_admin && (
+              <Button
+                variant="outline"
+                onClick={() => navigate(createPageUrl('Admin'))}
+                className="w-full border-red-200 text-red-600 hover:bg-red-50"
+              >
+                <ShieldAlert className="w-4 h-4 mr-2" />
+                Admin Panel
+              </Button>
+            )}
+
+            <Button
+              variant="outline"
+              onClick={handleLogout}
+              className="w-full text-slate-600"
+            >
+              <LogOut className="w-4 h-4 mr-2" />
+              Log Out
+            </Button>
+          </div>
         </div>
       </div>
 

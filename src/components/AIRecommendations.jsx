@@ -87,11 +87,13 @@ Return exactly 3 recommendations.`,
       setRecommendations(enrichedRecs);
     } catch (err) {
       console.error('Error generating recommendations:', err);
-      setError('Failed to generate recommendations');
+      setError(true);
     } finally {
       setLoading(false);
     }
   };
+
+  if (error) return null;
 
   if (!isPaidUser) {
     return (
@@ -122,8 +124,6 @@ Return exactly 3 recommendations.`,
           <Loader2 className="w-6 h-6 animate-spin text-blue-500" />
           <span className="ml-2 text-sm text-slate-500">Analyzing profiles...</span>
         </div>
-      ) : error ? (
-        <p className="text-sm text-red-500">{error}</p>
       ) : recommendations.length > 0 ? (
         <div className="space-y-2">
           {recommendations.map((rec, index) => (

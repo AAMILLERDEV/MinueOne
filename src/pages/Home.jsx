@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { motion } from 'framer-motion';
 import { Button } from "@/components/ui/button";
-import { Loader2, Sparkles, Users, Shield, Rocket } from 'lucide-react';
+import { Loader2, Users, Shield, Rocket } from 'lucide-react';
 
 export default function Home() {
   const navigate = useNavigate();
@@ -56,18 +56,6 @@ export default function Home() {
       </div>
 
       <div className="relative max-w-lg mx-auto px-4 py-12 min-h-screen flex flex-col">
-        {/* Logo */}
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="text-center mb-8"
-        >
-          <h1 className="text-4xl font-bold bg-gradient-to-r from-white via-blue-200 to-cyan-200 bg-clip-text text-transparent">
-            Minus1
-          </h1>
-          <p className="text-blue-200 mt-2">Find your perfect match</p>
-        </motion.div>
-
         {/* Hero */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -79,9 +67,9 @@ export default function Home() {
             initial={{ scale: 0 }}
             animate={{ scale: 1 }}
             transition={{ delay: 0.4, type: "spring" }}
-            className="w-24 h-24 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-3xl mx-auto mb-8 flex items-center justify-center shadow-2xl shadow-blue-500/30"
+            className="mx-auto mb-8"
           >
-            <Sparkles className="w-12 h-12 text-white" />
+            <img src="/logo.svg" alt="Minus One" className="w-32 h-32 mx-auto drop-shadow-2xl" />
           </motion.div>
 
           <h2 className="text-3xl font-bold mb-4">

@@ -7,12 +7,14 @@ import { useAuth } from '@/lib/AuthContext';
 const UnreadContext = createContext({
   unreadCount: 0, unreadByMatch: {}, markMatchRead: () => {},
   teamUnreadCount: 0, unreadByTeam: {}, markTeamRead: () => {},
+  pendingRequestCount: 0, refreshPendingRequests: () => {},
 });
 
 export function UnreadProvider({ children }) {
   const { isAuthenticated } = useAuth();
   const [unreadByMatch, setUnreadByMatch] = useState({});
   const [unreadByTeam, setUnreadByTeam] = useState({});
+  const [pendingRequestCount, setPendingRequestCount] = useState(0);
   const profileIdRef = useRef(null);
   const matchIdsRef = useRef([]);
   const teamIdsRef = useRef([]);
@@ -27,6 +29,7 @@ export function UnreadProvider({ children }) {
     } else {
       setUnreadByMatch({});
       setUnreadByTeam({});
+      setPendingRequestCount(0);
       profileIdRef.current = null;
       matchIdsRef.current = [];
       teamIdsRef.current = [];
@@ -38,6 +41,15 @@ export function UnreadProvider({ children }) {
       }
     };
   }, [isAuthenticated]);
+
+  const loadPendingRequests = async (profileId) => {
+    const { data } = await supabase
+      .from('matches')
+      .select('id')
+      .eq('to_profile_id', profileId)
+      .eq('status', 'pending');
+    setPendingRequestCount((data ?? []).length);
+  };
 
   const init = async () => {
     try {
@@ -53,6 +65,9 @@ export function UnreadProvider({ children }) {
 
       const profileId = profiles[0].id;
       profileIdRef.current = profileId;
+
+      // ── Pending match requests (incoming) ───────────────────────────────────
+      await loadPendingRequests(profileId);
 
       // ── Match messages ──────────────────────────────────────────────────────
       const { data: matches } = await supabase
@@ -155,6 +170,21 @@ export function UnreadProvider({ children }) {
             }));
           }
         })
+        // Listen for new match requests directed at this user
+        .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'matches' }, (payload) => {
+          const match = payload.new;
+          if (match.to_profile_id === profileIdRef.current && match.status === 'pending') {
+            setPendingRequestCount(prev => prev + 1);
+          }
+        })
+        // Listen for match status changes (accepted/declined)
+        .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'matches' }, (payload) => {
+          const match = payload.new;
+          if (match.to_profile_id === profileIdRef.current) {
+            // Re-fetch accurate count on any match update
+            loadPendingRequests(profileIdRef.current);
+          }
+        })
         .subscribe();
       channelRef.current = channel;
     } catch (err) {
@@ -180,10 +210,15 @@ export function UnreadProvider({ children }) {
     });
   };
 
+  const refreshPendingRequests = () => {
+    if (profileIdRef.current) loadPendingRequests(profileIdRef.current);
+  };
+
   return (
     <UnreadContext.Provider value={{
       unreadCount, unreadByMatch, markMatchRead,
       teamUnreadCount, unreadByTeam, markTeamRead,
+      pendingRequestCount, refreshPendingRequests,
     }}>
       {children}
     </UnreadContext.Provider>

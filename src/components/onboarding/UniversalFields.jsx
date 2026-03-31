@@ -111,13 +111,13 @@ export default function UniversalFields({ profile, setProfile, onImageUpload, on
           />
         </div>
 
-        {/* AI Profile Assistant */}
-        <AIProfileAssistant 
+        {/* AI Profile Assistant - hidden until feature is ready */}
+        {/* <AIProfileAssistant
           profile={profile}
           setProfile={setProfile}
           isPremium={isPremium}
           onUpgrade={onUpgrade}
-        />
+        /> */}
 
         <div>
           <Label>Location</Label>

@@ -3,21 +3,23 @@ import { createPageUrl } from '@/utils';
 import { useAuth } from '@/lib/AuthContext';
 import { useUnread } from '@/lib/UnreadContext';
 import { motion } from 'framer-motion';
-import { Compass, MessageCircle, Settings, BarChart3, Rss, Users } from 'lucide-react';
+import { Compass, MessageCircle, Settings, Rss, Building2 } from 'lucide-react';
 
 const navItems = [
   { name: 'Discover', icon: Compass, page: 'Discover' },
   { name: 'Matches', icon: MessageCircle, page: 'Matches' },
   { name: 'Feed', icon: Rss, page: 'Feed' },
-  { name: 'Team', icon: Users, page: 'Team' },
+  { name: 'Company', icon: Building2, page: 'Company' },
   { name: 'Settings', icon: Settings, page: 'Settings' },
 ];
 
 export default function Layout({ children, currentPageName }) {
   const { isAuthenticated } = useAuth();
-  const { unreadCount, teamUnreadCount } = useUnread();
+  const { unreadCount, teamUnreadCount, pendingRequestCount } = useUnread();
 
-  // Pages that don't show navigation
+  // Total badge for Matches tab: unread messages + incoming match requests
+  const matchesBadge = unreadCount + pendingRequestCount;
+
   const hideNav = ['Home', 'Onboarding', 'Chat', 'Login', 'PublicProfile', 'ResetPassword'].includes(currentPageName);
 
   if (hideNav) {
@@ -49,12 +51,14 @@ export default function Layout({ children, currentPageName }) {
                         className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 bg-blue-600 rounded-full"
                       />
                     )}
-                    {item.name === 'Matches' && unreadCount > 0 && (
+                    {/* Matches badge: unread messages + incoming requests */}
+                    {item.name === 'Matches' && matchesBadge > 0 && (
                       <span className="absolute -top-1.5 -right-1.5 min-w-[16px] h-4 bg-red-500 text-white rounded-full text-[10px] font-bold flex items-center justify-center px-0.5">
-                        {unreadCount > 9 ? '9+' : unreadCount}
+                        {matchesBadge > 9 ? '9+' : matchesBadge}
                       </span>
                     )}
-                    {item.name === 'Team' && teamUnreadCount > 0 && (
+                    {/* Company badge: team unread messages */}
+                    {item.name === 'Company' && teamUnreadCount > 0 && (
                       <span className="absolute -top-1.5 -right-1.5 min-w-[16px] h-4 bg-red-500 text-white rounded-full text-[10px] font-bold flex items-center justify-center px-0.5">
                         {teamUnreadCount > 9 ? '9+' : teamUnreadCount}
                       </span>

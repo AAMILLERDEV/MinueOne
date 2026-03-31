@@ -166,6 +166,9 @@ export const minus1 = {
     TeamGroupMessage: createEntityApi('team_group_messages'),
     Team: createEntityApi('teams'),
     TeamMember: createEntityApi('team_members'),
+    CompanyChecklistItem: createEntityApi('company_checklist_items'),
+    Company: createEntityApi('companies'),
+    CompanyMember: createEntityApi('company_members'),
   },
   integrations,
   appLogs: {

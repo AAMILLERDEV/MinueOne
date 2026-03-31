@@ -62,6 +62,7 @@ import Admin from './pages/Admin';
 import Team from './pages/Team';
 import PublicProfile from './pages/PublicProfile';
 import ResetPassword from './pages/ResetPassword';
+import Company from './pages/Company';
 import __Layout from './Layout.jsx';
 
 
@@ -81,6 +82,7 @@ export const PAGES = {
     "Team": Team,
     "PublicProfile": PublicProfile,
     "ResetPassword": ResetPassword,
+    "Company": Company,
 }
 
 export const pagesConfig = {
