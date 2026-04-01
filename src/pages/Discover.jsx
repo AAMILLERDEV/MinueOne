@@ -4,6 +4,8 @@ import { useNavigate } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Loader2, Users, Search, CalendarDays, X, Sparkles } from 'lucide-react';
+import NotificationsPanel from '@/components/NotificationsPanel';
+import { useNotifications } from '@/lib/NotificationsContext';
 import ProfileCard from '@/components/ProfileCard';
 import SwipeButtons from '@/components/SwipeButtons';
 import MatchModal from '@/components/MatchModal';
@@ -22,6 +24,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 export default function Discover() {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { createNotification } = useNotifications();
   const [loading, setLoading] = useState(true);
   const [myProfile, setMyProfile] = useState(null);
   const [profiles, setProfiles] = useState([]);
@@ -338,6 +341,13 @@ export default function Discover() {
           to_profile_id: targetProfile.id,
           status: 'pending'
         });
+        await createNotification({
+          profileId: targetProfile.id,
+          type: 'match_request',
+          title: 'New match request',
+          body: `${myProfile.display_name} wants to connect with you`,
+          data: { from_profile_id: myProfile.id },
+        });
       }
 
       toast({
@@ -425,7 +435,7 @@ export default function Discover() {
         {/* Header */}
         <div className="p-4 flex items-center justify-between">
           <BrandLogo />
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
             <button
               onClick={() => setShowEventLink(v => !v)}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-sm transition-all ${
@@ -442,9 +452,12 @@ export default function Discover() {
               onFiltersChange={handleFiltersChange}
               activeCount={getActiveFilterCount()}
             />
-            <div className="text-sm text-slate-500">
-              {profiles.length - currentIndex} left
-            </div>
+            {profiles.length - currentIndex > 0 && (
+              <div className="text-sm text-slate-500">
+                {profiles.length - currentIndex} left
+              </div>
+            )}
+            <NotificationsPanel />
           </div>
         </div>
 

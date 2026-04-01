@@ -272,7 +272,7 @@ Reject if: primarily promoting a service/product, generic sales pitch, no action
 
         {/* Category filter */}
         <div className="mt-4 max-w-lg mx-auto">
-          <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none">
+          <div className="flex gap-2 overflow-x-auto pb-3 scrollbar-none">
             {CATEGORIES.map(cat => (
               <button
                 key={cat.id}

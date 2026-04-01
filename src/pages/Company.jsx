@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { useNotifications } from '@/lib/NotificationsContext';
 import { minus1 } from '@/api/minus1Client';
 import { supabase } from '@/api/supabaseClient';
 import { useNavigate } from 'react-router-dom';
@@ -8,7 +9,7 @@ import {
   Loader2, Building2, ClipboardList, ChevronDown, ChevronUp,
   Lock, Plus, Check, Circle, Pencil, Trash2, Link, CalendarDays,
   User, ChevronRight, X, Save, Users, Crown, UserPlus, Globe,
-  Briefcase, ArrowLeft,
+  Briefcase, ArrowLeft, Send, MessageCircle, Camera,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -17,10 +18,9 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle,
 } from '@/components/ui/dialog';
 import {
-  CHECKLIST_TEMPLATE, STAGE_LABELS, ITEM_STATUSES,
+  STAGE_LABELS, ITEM_STATUSES,
   getStatusConfig, stageCompletionRatio, isStageUnlocked,
 } from '@/lib/checklistTemplate';
-import TeamLinkManager from '@/components/team/TeamLinkManager';
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
@@ -117,25 +117,26 @@ function ChecklistItem({ item, members, onUpdate, onDelete }) {
   };
 
   return (
-    <div className={`rounded-xl border transition-colors ${expanded ? 'border-slate-300 bg-white shadow-sm' : 'border-slate-200 bg-white'}`}>
-      <div className="flex items-center gap-3 px-3 py-2.5">
+    <div className={`rounded-xl border transition-all ${expanded ? 'border-slate-300 bg-white shadow-sm' : 'border-slate-200 bg-white hover:border-slate-300'}`}>
+      <div className="flex items-center gap-3 px-4 py-3">
         <button
           onClick={cycleStatus}
           title="Cycle status"
           className={`flex-shrink-0 w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors
-            ${item.status === 'complete' ? 'bg-green-500 border-green-500' : item.status === 'in_progress' ? 'border-amber-400' : 'border-slate-300'}`}
+            ${item.status === 'complete' ? 'bg-green-500 border-green-500' : item.status === 'in_progress' ? 'border-amber-400 bg-amber-50' : 'border-slate-300 hover:border-slate-400'}`}
         >
           {item.status === 'complete' && <Check className="w-3 h-3 text-white" />}
           {item.status === 'in_progress' && <span className="w-1.5 h-1.5 bg-amber-400 rounded-full" />}
         </button>
-        <span className={`flex-1 text-sm leading-snug ${item.status === 'complete' ? 'line-through text-slate-400' : 'text-slate-800'}`}>
+        <span className={`flex-1 text-xs font-medium leading-snug tracking-[-0.01em] ${
+          item.status === 'complete' ? 'line-through text-slate-400' :
+          item.status === 'in_progress' ? 'text-slate-700' : 'text-slate-800'
+        }`}>
           {item.title}
         </span>
-        {assignee && (
-          <MemberAvatar profile={assignee} size="sm" />
-        )}
-        <button onClick={() => setExpanded(v => !v)} className="text-slate-300 hover:text-slate-500 flex-shrink-0">
-          {expanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+        {assignee && <MemberAvatar profile={assignee} size="sm" />}
+        <button onClick={() => setExpanded(v => !v)} className="text-slate-300 hover:text-slate-500 flex-shrink-0 transition-colors">
+          {expanded ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
         </button>
       </div>
 
@@ -245,11 +246,12 @@ function ChecklistItem({ item, members, onUpdate, onDelete }) {
 
 // ── ChecklistStage ────────────────────────────────────────────────────────────
 
-function ChecklistStage({ stage, items, members, onUpdate, onDelete, onAddItem }) {
+function ChecklistStage({ stage, items, members, onUpdate, onDelete, onAddItem, defaultCollapsed = false }) {
   const stageItems = items.filter(i => i.stage === stage);
   const ratio = stageCompletionRatio(items, stage);
   const categories = [...new Set(stageItems.map(i => i.category))];
 
+  const [collapsed, setCollapsed] = useState(defaultCollapsed);
   const [addingCategory, setAddingCategory] = useState(null);
   const [newItemTitle, setNewItemTitle] = useState('');
   const [newCategoryName, setNewCategoryName] = useState('');
@@ -272,63 +274,76 @@ function ChecklistStage({ stage, items, members, onUpdate, onDelete, onAddItem }
 
   return (
     <div className="space-y-5">
-      <div className="bg-white rounded-xl border border-slate-200 p-4">
+      <button
+        onClick={() => setCollapsed(v => !v)}
+        className="w-full bg-white rounded-xl border border-slate-200 p-4 text-left hover:border-slate-300 transition-colors"
+      >
         <div className="flex items-center justify-between mb-2">
           <div>
-            <p className="text-sm font-semibold text-slate-900">{STAGE_LABELS[stage]?.label}</p>
-            <p className="text-xs text-slate-500">{STAGE_LABELS[stage]?.goal}</p>
+            <p className="text-sm font-bold text-slate-900 tracking-tight">
+              {STAGE_LABELS[stage]?.label}
+              <span className="ml-2 text-xs font-normal text-slate-400">{STAGE_LABELS[stage]?.subtitle}</span>
+            </p>
+            <p className="text-xs text-slate-500 mt-0.5 font-normal">{STAGE_LABELS[stage]?.goal}</p>
           </div>
-          <span className="text-sm font-bold text-blue-600">
-            {stageItems.filter(i => i.status === 'complete').length}/{stageItems.length}
-          </span>
+          <div className="flex items-center gap-3">
+            <span className="text-sm font-bold text-blue-600">
+              {stageItems.filter(i => i.status === 'complete').length}/{stageItems.length}
+            </span>
+            {collapsed ? <ChevronDown className="w-4 h-4 text-slate-400" /> : <ChevronUp className="w-4 h-4 text-slate-400" />}
+          </div>
         </div>
         <ProgressBar ratio={ratio} />
-      </div>
+      </button>
 
-      {categories.map(category => {
-        const catItems = stageItems.filter(i => i.category === category).sort((a, b) => a.sort_order - b.sort_order);
-        return (
-          <div key={category}>
-            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2 px-1">{category}</p>
-            <div className="space-y-1.5">
-              {catItems.map(item => (
-                <ChecklistItem key={item.id} item={item} members={members} onUpdate={onUpdate} onDelete={onDelete} />
-              ))}
-              {addingCategory === category ? (
-                <div className="flex gap-2 px-1">
-                  <Input autoFocus value={newItemTitle} onChange={e => setNewItemTitle(e.target.value)}
-                    onKeyDown={e => { if (e.key === 'Enter') handleAddItem(category); if (e.key === 'Escape') setAddingCategory(null); }}
-                    placeholder="New item title…" className="h-8 text-xs" />
-                  <Button size="sm" onClick={() => handleAddItem(category)} className="h-8 text-xs bg-blue-600 hover:bg-blue-700">Add</Button>
-                  <Button size="sm" variant="outline" onClick={() => setAddingCategory(null)} className="h-8 text-xs"><X className="w-3 h-3" /></Button>
+      {!collapsed && (
+        <>
+          {categories.map(category => {
+            const catItems = stageItems.filter(i => i.category === category).sort((a, b) => a.sort_order - b.sort_order);
+            return (
+              <div key={category}>
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 px-1">{category}</p>
+                <div className="space-y-1.5">
+                  {catItems.map(item => (
+                    <ChecklistItem key={item.id} item={item} members={members} onUpdate={onUpdate} onDelete={onDelete} />
+                  ))}
+                  {addingCategory === category ? (
+                    <div className="flex gap-2 px-1">
+                      <Input autoFocus value={newItemTitle} onChange={e => setNewItemTitle(e.target.value)}
+                        onKeyDown={e => { if (e.key === 'Enter') handleAddItem(category); if (e.key === 'Escape') setAddingCategory(null); }}
+                        placeholder="New item title…" className="h-8 text-xs" />
+                      <Button size="sm" onClick={() => handleAddItem(category)} className="h-8 text-xs bg-blue-600 hover:bg-blue-700">Add</Button>
+                      <Button size="sm" variant="outline" onClick={() => setAddingCategory(null)} className="h-8 text-xs"><X className="w-3 h-3" /></Button>
+                    </div>
+                  ) : (
+                    <button onClick={() => { setAddingCategory(category); setNewItemTitle(''); }}
+                      className="flex items-center gap-1.5 text-xs text-slate-400 hover:text-blue-600 px-1 py-1 transition-colors">
+                      <Plus className="w-3.5 h-3.5" />Add item
+                    </button>
+                  )}
                 </div>
-              ) : (
-                <button onClick={() => { setAddingCategory(category); setNewItemTitle(''); }}
-                  className="flex items-center gap-1.5 text-xs text-slate-400 hover:text-blue-600 px-1 py-1 transition-colors">
-                  <Plus className="w-3.5 h-3.5" />Add item
-                </button>
-              )}
-            </div>
-          </div>
-        );
-      })}
+              </div>
+            );
+          })}
 
-      {showNewCategory ? (
-        <div className="border border-dashed border-slate-300 rounded-xl p-3 space-y-2">
-          <Input autoFocus value={newCategoryName} onChange={e => setNewCategoryName(e.target.value)} placeholder="Category name…" className="h-8 text-xs" />
-          <Input value={newItemTitle} onChange={e => setNewItemTitle(e.target.value)}
-            onKeyDown={e => { if (e.key === 'Enter') handleAddCategory(); if (e.key === 'Escape') setShowNewCategory(false); }}
-            placeholder="First item title…" className="h-8 text-xs" />
-          <div className="flex gap-2">
-            <Button size="sm" onClick={handleAddCategory} className="h-7 text-xs bg-blue-600 hover:bg-blue-700">Add category</Button>
-            <Button size="sm" variant="outline" onClick={() => setShowNewCategory(false)} className="h-7 text-xs">Cancel</Button>
-          </div>
-        </div>
-      ) : (
-        <button onClick={() => { setShowNewCategory(true); setNewCategoryName(''); setNewItemTitle(''); }}
-          className="flex items-center gap-1.5 text-xs text-slate-400 hover:text-blue-600 border border-dashed border-slate-200 rounded-xl px-3 py-2 w-full transition-colors">
-          <Plus className="w-3.5 h-3.5" />Add category
-        </button>
+          {showNewCategory ? (
+            <div className="border border-dashed border-slate-300 rounded-xl p-3 space-y-2">
+              <Input autoFocus value={newCategoryName} onChange={e => setNewCategoryName(e.target.value)} placeholder="Category name…" className="h-8 text-xs" />
+              <Input value={newItemTitle} onChange={e => setNewItemTitle(e.target.value)}
+                onKeyDown={e => { if (e.key === 'Enter') handleAddCategory(); if (e.key === 'Escape') setShowNewCategory(false); }}
+                placeholder="First item title…" className="h-8 text-xs" />
+              <div className="flex gap-2">
+                <Button size="sm" onClick={handleAddCategory} className="h-7 text-xs bg-blue-600 hover:bg-blue-700">Add category</Button>
+                <Button size="sm" variant="outline" onClick={() => setShowNewCategory(false)} className="h-7 text-xs">Cancel</Button>
+              </div>
+            </div>
+          ) : (
+            <button onClick={() => { setShowNewCategory(true); setNewCategoryName(''); setNewItemTitle(''); }}
+              className="flex items-center gap-1.5 text-xs text-slate-400 hover:text-blue-600 border border-dashed border-slate-200 rounded-xl px-3 py-2 w-full transition-colors">
+              <Plus className="w-3.5 h-3.5" />Add category
+            </button>
+          )}
+        </>
       )}
     </div>
   );
@@ -448,6 +463,103 @@ function CreateCompanyDialog({ open, onOpenChange, myProfile, onCreated }) {
   );
 }
 
+// ── EditCompanyDialog ─────────────────────────────────────────────────────────
+
+function EditCompanyDialog({ open, onOpenChange, company, onSaved }) {
+  const [form, setForm] = useState({});
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    if (open && company) {
+      setForm({
+        name: company.name ?? '',
+        description: company.description ?? '',
+        website_url: company.website_url ?? '',
+        industry: company.industry ?? '',
+        stage: company.stage ?? '',
+      });
+      setError('');
+    }
+  }, [open, company]);
+
+  const handleSave = async () => {
+    if (!form.name.trim()) { setError('Company name is required.'); return; }
+    setSaving(true);
+    setError('');
+    try {
+      const { data, error: err } = await supabase
+        .from('companies')
+        .update({
+          name: form.name.trim(),
+          description: form.description.trim() || null,
+          website_url: form.website_url.trim() || null,
+          industry: form.industry || null,
+          stage: form.stage || null,
+        })
+        .eq('id', company.id)
+        .select()
+        .single();
+      if (err) throw err;
+      onSaved(data);
+      onOpenChange(false);
+    } catch (err) {
+      setError(err.message || 'Failed to save changes.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle>Edit company</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-3 mt-1">
+          <div>
+            <label className="text-xs font-medium text-slate-500 block mb-1">Company name *</label>
+            <Input value={form.name ?? ''} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} className="h-9" autoFocus />
+          </div>
+          <div>
+            <label className="text-xs font-medium text-slate-500 block mb-1">Description</label>
+            <Textarea value={form.description ?? ''} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} rows={2} className="text-sm resize-none" placeholder="What does your company do?" />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="text-xs font-medium text-slate-500 block mb-1">Industry</label>
+              <select value={form.industry ?? ''} onChange={e => setForm(f => ({ ...f, industry: e.target.value }))}
+                className="w-full h-9 text-sm border border-slate-200 rounded-lg px-2 bg-white">
+                <option value="">Select…</option>
+                {INDUSTRY_OPTIONS.map(o => <option key={o} value={o}>{o}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className="text-xs font-medium text-slate-500 block mb-1">Stage</label>
+              <select value={form.stage ?? ''} onChange={e => setForm(f => ({ ...f, stage: e.target.value }))}
+                className="w-full h-9 text-sm border border-slate-200 rounded-lg px-2 bg-white">
+                <option value="">Select…</option>
+                {STAGE_OPTIONS.map(o => <option key={o} value={o}>{o}</option>)}
+              </select>
+            </div>
+          </div>
+          <div>
+            <label className="text-xs font-medium text-slate-500 block mb-1">Website</label>
+            <Input value={form.website_url ?? ''} onChange={e => setForm(f => ({ ...f, website_url: e.target.value }))} placeholder="https://…" className="h-9" />
+          </div>
+          {error && <p className="text-xs text-red-500">{error}</p>}
+          <div className="flex gap-2 pt-1">
+            <Button onClick={handleSave} disabled={saving} className="flex-1 bg-blue-600 hover:bg-blue-700">
+              {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Save changes'}
+            </Button>
+            <Button variant="outline" onClick={() => onOpenChange(false)} className="flex-1">Cancel</Button>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 // ── CreateTeamDialog ──────────────────────────────────────────────────────────
 
 function CreateTeamDialog({ open, onOpenChange, companyId, companyMembers, matchedProfiles, onCreated, myProfile }) {
@@ -475,7 +587,8 @@ function CreateTeamDialog({ open, onOpenChange, companyId, companyMembers, match
     setSaving(true);
     setError('');
     try {
-      const team = await minus1.entities.Team.create({ name: name.trim(), company_id: companyId });
+      const code = Math.random().toString(36).slice(2, 8).toUpperCase();
+      const team = await minus1.entities.Team.create({ name: name.trim(), company_id: companyId, owner_profile_id: myProfile.id, code });
       // Add creator
       await minus1.entities.TeamMember.create({ team_id: team.id, profile_id: myProfile.id, role: 'admin' });
       // Add selected members
@@ -534,10 +647,405 @@ function CreateTeamDialog({ open, onOpenChange, companyId, companyMembers, match
   );
 }
 
+// ── TeamDetailPanel ───────────────────────────────────────────────────────────
+
+function TeamDetailPanel({ team: initialTeam, members, myProfile, onBack, onMembersUpdate }) {
+  const { createNotification } = useNotifications();
+  const [team, setTeam] = useState(initialTeam);
+  const [messages, setMessages] = useState([]);
+  const [msgInput, setMsgInput] = useState('');
+  const [sending, setSending] = useState(false);
+  const [loadingMsgs, setLoadingMsgs] = useState(true);
+  const [profilesCache, setProfilesCache] = useState({});
+  const [showInvite, setShowInvite] = useState(false);
+  const [inviteProfiles, setInviteProfiles] = useState([]);
+  const [inviteLoading, setInviteLoading] = useState(false);
+  const [inviteStatus, setInviteStatus] = useState({});
+  const [inviteSearch, setInviteSearch] = useState('');
+  const [pendingInvites, setPendingInvites] = useState([]);
+  const [showPending, setShowPending] = useState(false);
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const msgsEndRef = useRef(null);
+  const realtimeRef = useRef(null);
+  const fileInputRef = useRef(null);
+  const isOwner = team.owner_profile_id === myProfile.id;
+
+  useEffect(() => {
+    // Clear pending status for the current user when they open the team
+    supabase.from('team_members')
+      .update({ status: 'active' })
+      .eq('team_id', team.id)
+      .eq('profile_id', myProfile.id)
+      .eq('status', 'pending')
+      .then(() => {});
+  }, [team.id, myProfile.id]);
+
+  useEffect(() => {
+    loadMessages();
+    const channel = supabase
+      .channel(`team_chat:${team.id}`)
+      .on('postgres_changes', {
+        event: 'INSERT', schema: 'public', table: 'team_group_messages',
+        filter: `team_id=eq.${team.id}`,
+      }, (payload) => {
+        setMessages(prev => prev.some(m => m.id === payload.new.id) ? prev : [...prev, payload.new]);
+      })
+      .subscribe();
+    realtimeRef.current = channel;
+    return () => { supabase.removeChannel(channel); };
+  }, [team.id]);
+
+  useEffect(() => {
+    msgsEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages]);
+
+  const loadMessages = async () => {
+    setLoadingMsgs(true);
+    try {
+      const { data } = await supabase
+        .from('team_group_messages').select('*').eq('team_id', team.id).order('created_at', { ascending: true });
+      setMessages(data ?? []);
+      const senderIds = [...new Set((data ?? []).map(m => m.sender_profile_id))];
+      const memberMap = {};
+      members.forEach(({ profile }) => { if (profile) memberMap[profile.id] = profile; });
+      if (senderIds.length) {
+        const { data: profs } = await supabase
+          .from('profiles').select('id, display_name, avatar_url').in('id', senderIds);
+        (profs ?? []).forEach(p => { memberMap[p.id] = p; });
+      }
+      setProfilesCache(memberMap);
+    } finally {
+      setLoadingMsgs(false);
+    }
+  };
+
+  const handleSend = async () => {
+    if (!msgInput.trim() || sending) return;
+    const content = msgInput.trim();
+    setSending(true);
+    setMsgInput('');
+    try {
+      const { data: msg } = await supabase
+        .from('team_group_messages')
+        .insert({ team_id: team.id, sender_profile_id: myProfile.id, content })
+        .select().single();
+      if (msg) {
+        setMessages(prev => prev.some(m => m.id === msg.id) ? prev : [...prev, msg]);
+        setProfilesCache(prev => ({ ...prev, [myProfile.id]: myProfile }));
+      }
+    } catch { setMsgInput(content); } finally { setSending(false); }
+  };
+
+  const handleOpenInvite = async () => {
+    setShowInvite(true);
+    setInviteSearch('');
+    setShowPending(false);
+    setInviteStatus({});
+    setPendingInvites([]);
+    setInviteLoading(true);
+    try {
+      // Load existing pending invites from DB
+      const { data: pendingRows, error: pendingErr } = await supabase
+        .from('team_members')
+        .select('profile_id, profiles(id, display_name, avatar_url, profile_type)')
+        .eq('team_id', team.id)
+        .eq('status', 'pending');
+      if (!pendingErr) {
+        setPendingInvites((pendingRows ?? []).map(r => r.profiles).filter(Boolean));
+      }
+
+      // Load matches available to invite (excluding existing members)
+      const { data: matches } = await supabase
+        .from('matches')
+        .select('id, from_profile_id, to_profile_id')
+        .or(`from_profile_id.eq.${myProfile.id},to_profile_id.eq.${myProfile.id}`)
+        .eq('status', 'matched');
+
+      const matchMap = {};
+      (matches ?? []).forEach(m => {
+        const otherId = m.from_profile_id === myProfile.id ? m.to_profile_id : m.from_profile_id;
+        matchMap[otherId] = m.id;
+      });
+
+      const currentIds = new Set(activeMembers.map(m => m.profile?.id).filter(Boolean));
+      const otherIds = Object.keys(matchMap).filter(id => !currentIds.has(id));
+
+      if (otherIds.length) {
+        const { data: profs } = await supabase
+          .from('profiles').select('id, display_name, avatar_url, profile_type').in('id', otherIds);
+        setInviteProfiles((profs ?? []).map(p => ({ ...p, matchId: matchMap[p.id], source: 'match' })));
+      } else {
+        setInviteProfiles([]);
+      }
+    } finally {
+      setInviteLoading(false);
+    }
+  };
+
+  const handleAddMember = async (profile) => {
+    setInviteStatus(prev => ({ ...prev, [profile.id]: 'adding' }));
+    try {
+      await supabase.from('team_members').insert({ team_id: team.id, profile_id: profile.id, role: 'member', status: 'pending' });
+      if (profile.matchId) {
+        await supabase.from('messages').insert({
+          match_id: profile.matchId, sender_profile_id: myProfile.id,
+          content: `👋 I've added you to the "${team.name}" team on Minus1! Check the Company tab.`,
+        });
+      }
+      await createNotification({
+        profileId: profile.id,
+        type: 'team_invite',
+        title: 'Team invitation',
+        body: `${myProfile.display_name} invited you to join "${team.name}"`,
+        data: { team_id: team.id, team_name: team.name },
+      });
+      setInviteStatus(prev => ({ ...prev, [profile.id]: 'added' }));
+      setInviteProfiles(prev => prev.filter(p => p.id !== profile.id));
+      setPendingInvites(prev => [...prev, profile]);
+      onMembersUpdate();
+    } catch {
+      setInviteStatus(prev => ({ ...prev, [profile.id]: null }));
+    }
+  };
+
+  const handlePhotoUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploadingPhoto(true);
+    try {
+      const url = await minus1.storage.uploadFile(file, `teams/${team.id}`);
+      await supabase.from('teams').update({ photo_url: url }).eq('id', team.id);
+      setTeam(prev => ({ ...prev, photo_url: url }));
+    } catch (err) {
+      console.error('Photo upload failed:', err);
+    } finally {
+      setUploadingPhoto(false);
+    }
+  };
+
+  const activeMembers = members.filter(m => m.status !== 'pending');
+
+  return (
+    <div className="flex flex-col rounded-2xl border border-slate-200 overflow-hidden bg-white" style={{ height: 'calc(100vh - 260px)', minHeight: '480px' }}>
+      {/* Header */}
+      <div className="flex items-center gap-3 px-4 py-3 border-b border-slate-200 flex-shrink-0">
+        <button onClick={onBack} className="text-slate-500 hover:text-slate-800">
+          <ArrowLeft className="w-4.5 h-4.5" />
+        </button>
+        <div className="relative flex-shrink-0">
+          <div className="w-9 h-9 rounded-xl overflow-hidden bg-slate-100 flex items-center justify-center">
+            {team.photo_url
+              ? <img src={team.photo_url} className="w-full h-full object-cover" alt="" />
+              : <Users className="w-4 h-4 text-slate-400" />}
+          </div>
+          {isOwner && (
+            <>
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                className="absolute -bottom-1 -right-1 w-4 h-4 bg-blue-600 rounded-full flex items-center justify-center text-white hover:bg-blue-700"
+              >
+                {uploadingPhoto ? <Loader2 className="w-2.5 h-2.5 animate-spin" /> : <Camera className="w-2.5 h-2.5" />}
+              </button>
+              <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handlePhotoUpload} />
+            </>
+          )}
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="font-semibold text-slate-900 truncate">{team.name}</p>
+          <p className="text-xs text-slate-400">{activeMembers.length} member{activeMembers.length !== 1 ? 's' : ''}</p>
+        </div>
+        <button
+          onClick={handleOpenInvite}
+          className="p-1.5 rounded-lg text-slate-400 hover:text-purple-600 transition-colors"
+          title="Invite members"
+        >
+          <UserPlus className="w-4 h-4" />
+        </button>
+      </div>
+
+      {/* Invite dialog */}
+      <Dialog open={showInvite} onOpenChange={setShowInvite}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <UserPlus className="w-4 h-4 text-purple-600" />
+              Invite to {team.name}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 mt-1">
+            <Input
+              autoFocus
+              placeholder="Search matches…"
+              value={inviteSearch}
+              onChange={e => setInviteSearch(e.target.value)}
+              className="h-9"
+            />
+
+            {/* Pending invites label */}
+            {pendingInvites.length > 0 && (
+              <div className="rounded-xl border border-amber-200 bg-amber-50 overflow-hidden">
+                <button
+                  type="button"
+                  onClick={() => setShowPending(v => !v)}
+                  className="w-full flex items-center justify-between px-3 py-2 text-left"
+                >
+                  <span className="text-xs font-medium text-amber-700">
+                    {pendingInvites.length} pending invite{pendingInvites.length !== 1 ? 's' : ''} sent
+                  </span>
+                  <ChevronDown className={`w-3.5 h-3.5 text-amber-500 transition-transform ${showPending ? 'rotate-180' : ''}`} />
+                </button>
+                <AnimatePresence>
+                  {showPending && (
+                    <motion.div initial={{ height: 0 }} animate={{ height: 'auto' }} exit={{ height: 0 }} className="overflow-hidden">
+                      <div className="border-t border-amber-200 px-3 py-2 space-y-1.5">
+                        {pendingInvites.map(p => (
+                          <div key={p.id} className="flex items-center gap-2.5">
+                            <MemberAvatar profile={p} size="sm" />
+                            <div className="flex-1 min-w-0">
+                              <p className="text-xs font-medium text-slate-700 truncate">{p.display_name}</p>
+                              <p className="text-[10px] text-slate-400 capitalize">{p.profile_type?.replace('_', ' ')}</p>
+                            </div>
+                            <span className="text-[10px] text-amber-600 font-medium flex-shrink-0">Invite sent</span>
+                          </div>
+                        ))}
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            )}
+
+            <div className="space-y-1.5 max-h-72 overflow-y-auto -mx-1 px-1">
+              {inviteLoading ? (
+                <div className="flex items-center justify-center py-8 gap-2 text-slate-400">
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <span className="text-sm">Loading matches…</span>
+                </div>
+              ) : (() => {
+                const q = inviteSearch.trim().toLowerCase();
+                const filtered = inviteProfiles.filter(p =>
+                  !q || p.display_name?.toLowerCase().includes(q) || p.profile_type?.toLowerCase().includes(q)
+                );
+                if (filtered.length === 0) return (
+                  <p className="text-sm text-slate-400 text-center py-6">
+                    {q ? 'No matches found.' : 'No one left to invite.'}
+                  </p>
+                );
+                return filtered.map(p => (
+                  <div key={p.id} className="flex items-center gap-3 px-3 py-2.5 rounded-xl border border-slate-200 bg-white">
+                    <MemberAvatar profile={p} />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-slate-800 truncate">{p.display_name}</p>
+                      <p className="text-xs text-slate-400 capitalize">{p.profile_type?.replace('_', ' ')}</p>
+                    </div>
+                    <button
+                      onClick={() => handleAddMember(p)}
+                      disabled={inviteStatus[p.id] === 'adding' || inviteStatus[p.id] === 'added'}
+                      className={`text-xs px-3 py-1.5 rounded-lg font-medium transition-colors flex-shrink-0 ${
+                        inviteStatus[p.id] === 'added' ? 'bg-green-100 text-green-700' :
+                        inviteStatus[p.id] === 'adding' ? 'bg-slate-100 text-slate-400' :
+                        'bg-purple-600 text-white hover:bg-purple-700'
+                      }`}
+                    >
+                      {inviteStatus[p.id] === 'added' ? 'Added ✓' : inviteStatus[p.id] === 'adding' ? '…' : 'Add'}
+                    </button>
+                  </div>
+                ));
+              })()}
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Members strip */}
+      <div className="px-4 py-2 border-b border-slate-100 flex-shrink-0">
+        <div className="flex items-center gap-2 overflow-x-auto pb-0.5">
+          {activeMembers.map(({ profile, role }) => (
+            <div key={profile.id} className="flex flex-col items-center gap-0.5 flex-shrink-0">
+              <div className="relative">
+                <div className="w-7 h-7 rounded-full overflow-hidden bg-slate-100 flex items-center justify-center">
+                  {profile.avatar_url
+                    ? <img src={profile.avatar_url} className="w-full h-full object-cover" alt="" />
+                    : <span className="text-xs font-bold text-slate-500">{profile.display_name?.[0]}</span>}
+                </div>
+                {role === 'admin' && <Crown className="w-2.5 h-2.5 text-amber-500 absolute -top-0.5 -right-0.5" />}
+              </div>
+              <p className="text-[9px] text-slate-400 max-w-[40px] truncate">{profile.display_name}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Messages */}
+      <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3 bg-slate-50">
+        {loadingMsgs ? (
+          <div className="flex items-center justify-center py-8">
+            <Loader2 className="w-5 h-5 animate-spin text-slate-300" />
+          </div>
+        ) : messages.length === 0 ? (
+          <div className="flex flex-col items-center justify-center h-full text-center">
+            <MessageCircle className="w-8 h-8 text-slate-200 mb-2" />
+            <p className="text-sm text-slate-400">No messages yet. Say hello!</p>
+          </div>
+        ) : (
+          messages.map(msg => {
+            const sender = profilesCache[msg.sender_profile_id];
+            const isMe = msg.sender_profile_id === myProfile.id;
+            return (
+              <div key={msg.id} className={`flex gap-2.5 ${isMe ? 'flex-row-reverse' : ''}`}>
+                {!isMe && (
+                  <div className="w-7 h-7 rounded-full bg-slate-200 flex items-center justify-center flex-shrink-0 overflow-hidden">
+                    {sender?.avatar_url
+                      ? <img src={sender.avatar_url} className="w-full h-full object-cover" alt="" />
+                      : <span className="text-xs font-bold text-slate-500">{sender?.display_name?.[0]}</span>}
+                  </div>
+                )}
+                <div className={`max-w-[72%] flex flex-col ${isMe ? 'items-end' : 'items-start'}`}>
+                  {!isMe && sender && (
+                    <p className="text-[10px] text-slate-400 mb-0.5 px-1">{sender.display_name}</p>
+                  )}
+                  <div className={`px-3 py-2 rounded-2xl text-sm leading-snug ${isMe ? 'bg-blue-600 text-white rounded-tr-sm' : 'bg-white border border-slate-200 text-slate-800 rounded-tl-sm'}`}>
+                    {msg.content}
+                  </div>
+                  <p className="text-[10px] text-slate-300 mt-0.5 px-1">
+                    {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                  </p>
+                </div>
+              </div>
+            );
+          })
+        )}
+        <div ref={msgsEndRef} />
+      </div>
+
+      {/* Input */}
+      <div className="flex-shrink-0 px-4 py-3 bg-white border-t border-slate-200">
+        <div className="flex gap-2">
+          <input
+            value={msgInput}
+            onChange={e => setMsgInput(e.target.value)}
+            onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
+            placeholder={`Message ${team.name}…`}
+            className="flex-1 text-sm border border-slate-200 rounded-xl px-3 py-2 outline-none focus:border-blue-400 bg-slate-50"
+          />
+          <button
+            onClick={handleSend}
+            disabled={!msgInput.trim() || sending}
+            className="w-9 h-9 rounded-xl bg-blue-600 text-white flex items-center justify-center hover:bg-blue-700 disabled:opacity-40 flex-shrink-0 transition-colors"
+          >
+            {sending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ── Main Company page ─────────────────────────────────────────────────────────
 
 export default function Company() {
   const navigate = useNavigate();
+  const { createNotification } = useNotifications();
   const [loading, setLoading] = useState(true);
   const [myProfile, setMyProfile] = useState(null);
 
@@ -555,14 +1063,24 @@ export default function Company() {
   // Checklist
   const [checklistItems, setChecklistItems] = useState([]);
   const [checklistLoading, setChecklistLoading] = useState(false);
-  const [activeStage, setActiveStage] = useState(1);
 
   // Matched profiles (for team creation)
   const [matchedProfiles, setMatchedProfiles] = useState([]);
 
+  // Selected team detail
+  const [selectedCompanyTeamId, setSelectedCompanyTeamId] = useState(null);
+
   // Dialogs
   const [showCreateCompany, setShowCreateCompany] = useState(false);
   const [showCreateTeam, setShowCreateTeam] = useState(false);
+  const [showEditCompany, setShowEditCompany] = useState(false);
+
+  // Company member invite
+  const [showInviteEmployee, setShowInviteEmployee] = useState(false);
+  const [inviteEmpProfiles, setInviteEmpProfiles] = useState([]);
+  const [inviteEmpLoading, setInviteEmpLoading] = useState(false);
+  const [inviteEmpStatus, setInviteEmpStatus] = useState({});
+  const [inviteEmpSearch, setInviteEmpSearch] = useState('');
 
   useEffect(() => { loadData(); }, []);
 
@@ -643,7 +1161,7 @@ export default function Company() {
         team,
         members: (allMembers ?? [])
           .filter(m => m.team_id === team.id)
-          .map(m => ({ profile: m.profiles, role: m.role }))
+          .map(m => ({ profile: m.profiles, role: m.role, status: m.status ?? 'active' }))
           .filter(m => m.profile),
       })));
     } catch (err) {
@@ -653,26 +1171,42 @@ export default function Company() {
     }
   }, []);
 
-  // Load checklist for active company
+  // Load checklist for active company — items are stored per team (team_id).
+  // Seeding is handled by the DB trigger (seed_team_checklist) on team creation,
+  // but we call it here as a fallback for teams that predate the trigger.
   const loadChecklist = useCallback(async (companyId) => {
     if (!companyId) return;
     setChecklistLoading(true);
     try {
-      const { data: items, error } = await supabase
-        .from('company_checklist_items')
-        .select('*')
-        .eq('company_id', companyId)
-        .order('sort_order', { ascending: true });
+      // Get all teams belonging to this company
+      const { data: teams } = await supabase
+        .from('teams').select('id').eq('company_id', companyId);
+      const teamIds = (teams ?? []).map(t => t.id);
 
-      if (error) throw error;
-
-      if (!items?.length) {
-        const seeds = CHECKLIST_TEMPLATE.map(t => ({ ...t, company_id: companyId, is_from_template: true }));
-        const { data: seeded } = await supabase.from('company_checklist_items').insert(seeds).select();
-        setChecklistItems(seeded ?? []);
-      } else {
-        setChecklistItems(items);
+      if (!teamIds.length) {
+        setChecklistItems([]);
+        return;
       }
+
+      // Ensure each team has a full set of checklist rows (idempotent DB function)
+      for (const tid of teamIds) {
+        await supabase.rpc('seed_team_checklist', { p_team_id: tid });
+      }
+
+      // Load all items joined with their template data
+      const { data } = await supabase
+        .from('company_checklist_items')
+        .select('*, checklist_template_items(stage, category, title, sort_order)')
+        .in('team_id', teamIds);
+
+      // Flatten template fields so the rest of the UI reads item.stage / item.title etc.
+      setChecklistItems((data ?? []).map(row => ({
+        ...row,
+        stage:      row.checklist_template_items?.stage      ?? row.stage,
+        category:   row.checklist_template_items?.category   ?? row.category,
+        title:      row.checklist_template_items?.title      ?? row.title,
+        sort_order: row.checklist_template_items?.sort_order ?? row.sort_order,
+      })));
     } catch (err) {
       console.error('Error loading checklist:', err);
     } finally {
@@ -681,7 +1215,10 @@ export default function Company() {
   }, []);
 
   useEffect(() => {
-    if (activeTab === 'teams' && activeCompanyId) loadCompanyTeams(activeCompanyId);
+    if (activeTab === 'teams' && activeCompanyId) {
+      setSelectedCompanyTeamId(null);
+      loadCompanyTeams(activeCompanyId);
+    }
   }, [activeTab, activeCompanyId, loadCompanyTeams]);
 
   useEffect(() => {
@@ -691,30 +1228,48 @@ export default function Company() {
   // ── Checklist actions ──────────────────────────────────────────────────────
 
   const handleUpdateItem = async (id, updates) => {
-    setChecklistItems(prev => prev.map(i => i.id === id ? { ...i, ...updates } : i));
-    await minus1.entities.CompanyChecklistItem.update(id, updates);
+    const prev = checklistItems.find(i => i.id === id);
+    setChecklistItems(items => items.map(i => i.id === id ? { ...i, ...updates } : i));
+    await supabase.from('company_checklist_items').update(updates).eq('id', id);
+    if (updates.assignee_profile_id && updates.assignee_profile_id !== prev?.assignee_profile_id
+        && updates.assignee_profile_id !== myProfile?.id) {
+      const item = checklistItems.find(i => i.id === id);
+      await createNotification({
+        profileId: updates.assignee_profile_id,
+        type: 'checklist_assignment',
+        title: 'Checklist item assigned',
+        body: `You've been assigned "${item?.title ?? 'a checklist item'}"`,
+        data: { item_id: id, company_id: activeCompanyId },
+      });
+    }
   };
 
   const handleDeleteItem = async (id) => {
     setChecklistItems(prev => prev.filter(i => i.id !== id));
-    await minus1.entities.CompanyChecklistItem.delete(id);
+    await supabase.from('company_checklist_items').delete().eq('id', id);
   };
 
   const handleAddItem = async (stage, category, title) => {
-    const maxOrder = Math.max(
-      0,
-      ...checklistItems.filter(i => i.stage === stage && i.category === category).map(i => i.sort_order)
-    );
-    const newItem = await minus1.entities.CompanyChecklistItem.create({
-      company_id: activeCompanyId,
-      stage,
-      category,
-      title,
-      status: 'not_started',
-      sort_order: maxOrder + 1,
-      is_from_template: false,
-    });
-    setChecklistItems(prev => [...prev, newItem]);
+    // Find a team_id to attach the custom item to
+    const { data: teams } = await supabase
+      .from('teams').select('id').eq('company_id', activeCompanyId).limit(1);
+    const teamId = teams?.[0]?.id;
+    if (!teamId) return;
+    const maxOrder = checklistItems
+      .filter(i => i.stage === stage && i.category === category)
+      .reduce((m, i) => Math.max(m, i.sort_order ?? 0), -1);
+    const { data } = await supabase
+      .from('company_checklist_items')
+      .insert({ team_id: teamId, stage, category, title, status: 'not_started', sort_order: maxOrder + 1 })
+      .select('*, checklist_template_items(stage, category, title, sort_order)')
+      .single();
+    if (data) setChecklistItems(prev => [...prev, {
+      ...data,
+      stage:      data.checklist_template_items?.stage      ?? data.stage,
+      category:   data.checklist_template_items?.category   ?? data.category,
+      title:      data.checklist_template_items?.title      ?? data.title,
+      sort_order: data.checklist_template_items?.sort_order ?? data.sort_order,
+    }]);
   };
 
   // ── Handlers ───────────────────────────────────────────────────────────────
@@ -728,6 +1283,74 @@ export default function Company() {
 
   const handleTeamCreated = () => {
     loadCompanyTeams(activeCompanyId);
+  };
+
+  const handleCompanySaved = (updated) => {
+    setCompanies(prev => prev.map(c =>
+      c.company.id === updated.id ? { ...c, company: updated } : c
+    ));
+  };
+
+  const handleOpenInviteEmployee = async () => {
+    setShowInviteEmployee(true);
+    setInviteEmpSearch('');
+    setInviteEmpStatus({});
+    setInviteEmpProfiles([]);
+    setInviteEmpLoading(true);
+    try {
+      const { data: matches } = await supabase
+        .from('matches')
+        .select('id, from_profile_id, to_profile_id')
+        .or(`from_profile_id.eq.${myProfile.id},to_profile_id.eq.${myProfile.id}`)
+        .eq('status', 'matched');
+
+      const matchMap = {};
+      (matches ?? []).forEach(m => {
+        const otherId = m.from_profile_id === myProfile.id ? m.to_profile_id : m.from_profile_id;
+        matchMap[otherId] = m.id;
+      });
+
+      const currentIds = new Set(members.map(m => m.profile?.id).filter(Boolean));
+      const otherIds = Object.keys(matchMap).filter(id => !currentIds.has(id));
+
+      if (otherIds.length) {
+        const { data: profs } = await supabase
+          .from('profiles').select('id, display_name, avatar_url, profile_type').in('id', otherIds);
+        setInviteEmpProfiles((profs ?? []).map(p => ({ ...p, matchId: matchMap[p.id] })));
+      }
+    } finally {
+      setInviteEmpLoading(false);
+    }
+  };
+
+  const handleAddEmployee = async (profile) => {
+    setInviteEmpStatus(prev => ({ ...prev, [profile.id]: 'adding' }));
+    try {
+      await supabase.from('company_members').insert({
+        company_id: activeCompanyId, profile_id: profile.id, role: 'member',
+      });
+      await createNotification({
+        profileId: profile.id,
+        type: 'team_invite',
+        title: 'Company invitation',
+        body: `${myProfile.display_name} added you to "${activeCompany?.name}"`,
+        data: { company_id: activeCompanyId, company_name: activeCompany?.name },
+      });
+      setInviteEmpStatus(prev => ({ ...prev, [profile.id]: 'added' }));
+      setInviteEmpProfiles(prev => prev.filter(p => p.id !== profile.id));
+      // Reload company data to reflect new member
+      const { data: updatedMembers } = await supabase
+        .from('company_members')
+        .select('role, profile_id, profiles(id, display_name, avatar_url, profile_type)')
+        .eq('company_id', activeCompanyId);
+      setCompanies(prev => prev.map(c =>
+        c.company.id === activeCompanyId
+          ? { ...c, members: (updatedMembers ?? []).map(m => ({ role: m.role, profile: m.profiles, status: 'active' })) }
+          : c
+      ));
+    } catch {
+      setInviteEmpStatus(prev => ({ ...prev, [profile.id]: null }));
+    }
   };
 
   // ── Derived ────────────────────────────────────────────────────────────────
@@ -781,14 +1404,21 @@ export default function Company() {
               {/* Create additional company */}
               {isFounderOrCollaborator && (
                 <div className="flex flex-col items-end gap-0.5">
-                  <Button
-                    size="sm"
-                    onClick={() => setShowCreateCompany(true)}
-                    disabled={companies.length >= MAX_COMPANIES}
-                    className="bg-blue-600 hover:bg-blue-700 gap-1.5 disabled:opacity-50"
-                  >
-                    <Plus className="w-3.5 h-3.5" />New
-                  </Button>
+                  <div className="flex items-center gap-2">
+                    {isOwner && (
+                      <Button size="sm" onClick={() => setShowCreateTeam(true)} className="bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 gap-1.5">
+                        <Plus className="w-3.5 h-3.5" />New team
+                      </Button>
+                    )}
+                    <Button
+                      size="sm"
+                      onClick={() => setShowCreateCompany(true)}
+                      disabled={companies.length >= MAX_COMPANIES}
+                      className="bg-blue-600 hover:bg-blue-700 gap-1.5 disabled:opacity-50"
+                    >
+                      <Plus className="w-3.5 h-3.5" />New company
+                    </Button>
+                  </div>
                   {companies.length >= MAX_COMPANIES && (
                     <p className="text-[10px] text-slate-400">Limit: {MAX_COMPANIES} companies</p>
                   )}
@@ -858,9 +1488,20 @@ export default function Company() {
               <motion.div key="overview" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
                 {/* Company details card */}
                 <div className="bg-white rounded-2xl border border-slate-200 p-5 space-y-3">
-                  {activeCompany?.description && (
-                    <p className="text-sm text-slate-600">{activeCompany.description}</p>
-                  )}
+                  <div className="flex items-start justify-between">
+                    {activeCompany?.description
+                      ? <p className="text-sm text-slate-600 flex-1">{activeCompany.description}</p>
+                      : <span />}
+                    {isOwner && (
+                      <button
+                        onClick={() => setShowEditCompany(true)}
+                        className="ml-2 flex-shrink-0 p-1 rounded-lg text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition-colors"
+                        title="Edit company info"
+                      >
+                        <Pencil className="w-3.5 h-3.5" />
+                      </button>
+                    )}
+                  </div>
                   <div className="flex flex-wrap gap-3">
                     {activeCompany?.industry && (
                       <span className="flex items-center gap-1.5 text-xs text-slate-500">
@@ -889,6 +1530,15 @@ export default function Company() {
                       Employees
                       <span className="text-xs font-normal text-slate-400 bg-slate-100 rounded-full px-2 py-0.5">{members.length}</span>
                     </h3>
+                    {isOwner && (
+                      <button
+                        onClick={handleOpenInviteEmployee}
+                        className="flex items-center gap-1.5 text-xs font-medium text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded-lg transition-colors"
+                      >
+                        <UserPlus className="w-3.5 h-3.5" />
+                        Add Member
+                      </button>
+                    )}
                   </div>
                   <div className="space-y-3">
                     {members.map(({ profile, role }) => (
@@ -907,70 +1557,80 @@ export default function Company() {
                     ))}
                   </div>
                 </div>
-
-                {/* Team Collaboration */}
-                <div className="bg-white rounded-2xl border border-slate-200 p-5">
-                  <h3 className="font-semibold text-slate-900 flex items-center gap-2 mb-4">
-                    <Users className="w-4 h-4 text-purple-500" />
-                    Team Collaboration
-                  </h3>
-                  <TeamLinkManager
-                    myProfile={myProfile}
-                    isPremium={myProfile?.is_premium || ['premium', 'pro', 'business', 'enterprise'].includes(myProfile?.subscription_tier)}
-                    onUpgrade={() => {}}
-                  />
-                </div>
               </motion.div>
             )}
 
             {/* ── Teams tab ────────────────────────────────────────────── */}
             {activeTab === 'teams' && (
               <motion.div key="teams" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <p className="text-sm text-slate-500">Teams work together on specific goals within your company.</p>
-                  {isOwner && (
-                    <Button size="sm" onClick={() => setShowCreateTeam(true)} className="bg-blue-600 hover:bg-blue-700 gap-1.5 flex-shrink-0">
-                      <Plus className="w-3.5 h-3.5" />New team
-                    </Button>
-                  )}
-                </div>
-
-                {loadingTeams ? (
-                  <div className="flex items-center justify-center py-12">
-                    <Loader2 className="w-5 h-5 animate-spin text-blue-500" />
-                  </div>
-                ) : companyTeams.length === 0 ? (
-                  <div className="bg-white rounded-2xl border border-slate-200 p-8 text-center">
-                    <Users className="w-10 h-10 text-slate-300 mx-auto mb-3" />
-                    <h3 className="font-semibold text-slate-800 mb-1">No teams yet</h3>
-                    <p className="text-sm text-slate-500 mb-4">Create a team to organise employees and matches around specific work.</p>
-                    {isOwner && (
-                      <Button size="sm" onClick={() => setShowCreateTeam(true)} className="bg-blue-600 hover:bg-blue-700">
-                        Create first team
-                      </Button>
-                    )}
-                  </div>
+                {selectedCompanyTeamId ? (
+                  (() => {
+                    const teamData = companyTeams.find(t => t.team.id === selectedCompanyTeamId);
+                    if (!teamData) return null;
+                    return (
+                      <TeamDetailPanel
+                        team={teamData.team}
+                        members={teamData.members}
+                        myProfile={myProfile}
+                        onBack={() => setSelectedCompanyTeamId(null)}
+                        onMembersUpdate={() => loadCompanyTeams(activeCompanyId)}
+                      />
+                    );
+                  })()
                 ) : (
-                  companyTeams.map(({ team, members: tm }) => (
-                    <div key={team.id} className="bg-white rounded-2xl border border-slate-200 p-4">
-                      <div className="flex items-center gap-3">
-                        <div className="w-9 h-9 rounded-xl bg-slate-100 flex items-center justify-center flex-shrink-0">
-                          <Users className="w-4.5 h-4.5 text-slate-500" />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="font-medium text-slate-900 truncate">{team.name}</p>
-                          <div className="flex items-center gap-2 mt-1">
-                            <div className="flex -space-x-1">
-                              {tm.slice(0, 5).map(({ profile }) => (
-                                <MemberAvatar key={profile.id} profile={profile} size="sm" />
-                              ))}
-                            </div>
-                            <p className="text-xs text-slate-400">{tm.length} member{tm.length !== 1 ? 's' : ''}</p>
-                          </div>
-                        </div>
+                  <>
+                    <p className="text-sm text-slate-500">Teams work together on specific goals within your company.</p>
+
+                    {loadingTeams ? (
+                      <div className="flex items-center justify-center py-12">
+                        <Loader2 className="w-5 h-5 animate-spin text-blue-500" />
                       </div>
-                    </div>
-                  ))
+                    ) : companyTeams.length === 0 ? (
+                      <div className="bg-white rounded-2xl border border-slate-200 p-8 text-center">
+                        <Users className="w-10 h-10 text-slate-300 mx-auto mb-3" />
+                        <h3 className="font-semibold text-slate-800 mb-1">No teams yet</h3>
+                        <p className="text-sm text-slate-500 mb-4">Create a team to organise employees and matches around specific work.</p>
+                        {isOwner && (
+                          <Button size="sm" onClick={() => setShowCreateTeam(true)} className="bg-blue-600 hover:bg-blue-700">
+                            Create first team
+                          </Button>
+                        )}
+                      </div>
+                    ) : (
+                      companyTeams.map(({ team, members: tm }) => (
+                        <button
+                          key={team.id}
+                          onClick={() => setSelectedCompanyTeamId(team.id)}
+                          className="w-full bg-white rounded-2xl border border-slate-200 p-4 text-left hover:border-blue-300 hover:shadow-sm transition-all"
+                        >
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-xl overflow-hidden bg-slate-100 flex items-center justify-center flex-shrink-0">
+                              {team.photo_url
+                                ? <img src={team.photo_url} className="w-full h-full object-cover" alt="" />
+                                : <Users className="w-4 h-4 text-slate-400" />}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="font-medium text-slate-900 truncate">{team.name}</p>
+                              {(() => {
+                                const activeCount = tm.filter(m => m.status !== 'pending');
+                                return (
+                                  <div className="flex items-center gap-2 mt-1">
+                                    <div className="flex -space-x-1">
+                                      {activeCount.slice(0, 5).map(({ profile }) => (
+                                        <MemberAvatar key={profile.id} profile={profile} size="sm" />
+                                      ))}
+                                    </div>
+                                    <p className="text-xs text-slate-400">{activeCount.length} member{activeCount.length !== 1 ? 's' : ''}</p>
+                                  </div>
+                                );
+                              })()}
+                            </div>
+                            <ChevronRight className="w-4 h-4 text-slate-300 flex-shrink-0" />
+                          </div>
+                        </button>
+                      ))
+                    )}
+                  </>
                 )}
               </motion.div>
             )}
@@ -984,51 +1644,32 @@ export default function Company() {
                   </div>
                 ) : (
                   <div className="space-y-4">
-                    {/* Stage selector */}
-                    <div className="flex gap-1 overflow-x-auto pb-1">
-                      {[1, 2, 3, 4, 5].map(stage => {
-                        const unlocked = isStageUnlocked(checklistItems, stage);
-                        const isActive = activeStage === stage;
-                        const hasTemplate = VIEWABLE_STAGES.includes(stage);
-                        return (
-                          <button
-                            key={stage}
-                            onClick={() => unlocked && hasTemplate && setActiveStage(stage)}
-                            disabled={!unlocked || !hasTemplate}
-                            className={`flex-shrink-0 px-3 py-1.5 rounded-lg text-xs font-medium flex items-center gap-1 transition-all
-                              ${isActive && unlocked
-                                ? 'bg-blue-600 text-white shadow-sm'
-                                : unlocked && hasTemplate
-                                  ? 'bg-white border border-slate-200 text-slate-600 hover:border-blue-300'
-                                  : 'bg-slate-100 text-slate-300 cursor-not-allowed'
-                              }`}
-                          >
-                            {(!unlocked || !hasTemplate) && <Lock className="w-2.5 h-2.5" />}
-                            {STAGE_LABELS[stage]?.label}
-                          </button>
-                        );
-                      })}
-                    </div>
+                    {/* Viewable stages — collapsible */}
+                    {VIEWABLE_STAGES.map((stage, idx) => (
+                      <ChecklistStage
+                        key={stage}
+                        stage={stage}
+                        items={checklistItems}
+                        members={members}
+                        onUpdate={handleUpdateItem}
+                        onDelete={handleDeleteItem}
+                        onAddItem={handleAddItem}
+                        defaultCollapsed={idx > 0}
+                      />
+                    ))}
 
-                    {activeStage === 1 && isStageUnlocked(checklistItems, 2) && (
-                      <div className="bg-green-50 border border-green-200 rounded-xl px-3 py-2 text-xs text-green-700 flex items-center gap-2">
-                        <Check className="w-3.5 h-3.5 flex-shrink-0" />Stage 2 is now unlocked — great progress!
+                    {/* Locked future stages */}
+                    {[3, 4, 5].map(stage => (
+                      <div key={stage} className="bg-slate-50 rounded-xl border border-slate-200 p-4 flex items-center justify-between opacity-60">
+                        <div>
+                          <p className="text-sm font-semibold text-slate-500 flex items-center gap-2">
+                            <Lock className="w-3.5 h-3.5" />{STAGE_LABELS[stage]?.label}
+                            <span className="text-xs font-normal">{STAGE_LABELS[stage]?.subtitle}</span>
+                          </p>
+                          <p className="text-xs text-slate-400 mt-0.5">{STAGE_LABELS[stage]?.goal}</p>
+                        </div>
                       </div>
-                    )}
-                    {activeStage === 1 && !isStageUnlocked(checklistItems, 2) && (
-                      <div className="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-500 flex items-center gap-2">
-                        <Lock className="w-3 h-3 flex-shrink-0" />Complete 50% of Stage 1 to unlock Stage 2
-                      </div>
-                    )}
-
-                    <ChecklistStage
-                      stage={activeStage}
-                      items={checklistItems}
-                      members={members}
-                      onUpdate={handleUpdateItem}
-                      onDelete={handleDeleteItem}
-                      onAddItem={handleAddItem}
-                    />
+                    ))}
                   </div>
                 )}
               </motion.div>
@@ -1053,6 +1694,73 @@ export default function Company() {
         myProfile={myProfile}
         onCreated={handleTeamCreated}
       />
+      {activeCompany && (
+        <EditCompanyDialog
+          open={showEditCompany}
+          onOpenChange={setShowEditCompany}
+          company={activeCompany}
+          onSaved={handleCompanySaved}
+        />
+      )}
+
+      {/* Invite Employee Dialog */}
+      <Dialog open={showInviteEmployee} onOpenChange={setShowInviteEmployee}>
+        <DialogContent className="max-w-sm rounded-2xl">
+          <DialogHeader>
+            <DialogTitle>Add member to {activeCompany?.name}</DialogTitle>
+          </DialogHeader>
+          <div className="mt-2 space-y-3">
+            <Input
+              placeholder="Search matches…"
+              value={inviteEmpSearch}
+              onChange={e => setInviteEmpSearch(e.target.value)}
+              className="h-9"
+            />
+            <div className="max-h-72 overflow-y-auto space-y-1 -mx-1 px-1">
+              {inviteEmpLoading ? (
+                <div className="flex justify-center py-8">
+                  <Loader2 className="w-5 h-5 animate-spin text-slate-300" />
+                </div>
+              ) : (() => {
+                const q = inviteEmpSearch.trim().toLowerCase();
+                const filtered = inviteEmpProfiles.filter(p =>
+                  !q || p.display_name?.toLowerCase().includes(q) || p.profile_type?.toLowerCase().includes(q)
+                );
+                if (!filtered.length) return (
+                  <p className="text-sm text-slate-400 text-center py-8">
+                    {inviteEmpProfiles.length === 0 ? 'No matches available to add' : 'No results'}
+                  </p>
+                );
+                return filtered.map(p => {
+                  const st = inviteEmpStatus[p.id];
+                  return (
+                    <div key={p.id} className="flex items-center gap-3 p-2 rounded-xl hover:bg-slate-50">
+                      <MemberAvatar profile={p} />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-slate-800 truncate">{p.display_name}</p>
+                        <p className="text-xs text-slate-400 capitalize">{p.profile_type?.replace('_', ' ')}</p>
+                      </div>
+                      <button
+                        onClick={() => handleAddEmployee(p)}
+                        disabled={!!st}
+                        className={`flex-shrink-0 flex items-center gap-1 text-xs font-medium px-3 py-1.5 rounded-lg transition-colors ${
+                          st === 'added' ? 'bg-green-100 text-green-700' :
+                          st === 'adding' ? 'bg-slate-100 text-slate-400' :
+                          'bg-blue-600 text-white hover:bg-blue-700'
+                        }`}
+                      >
+                        {st === 'adding' ? <Loader2 className="w-3 h-3 animate-spin" /> :
+                         st === 'added' ? <Check className="w-3 h-3" /> : <UserPlus className="w-3 h-3" />}
+                        {st === 'added' ? 'Added' : st === 'adding' ? 'Adding…' : 'Add'}
+                      </button>
+                    </div>
+                  );
+                });
+              })()}
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

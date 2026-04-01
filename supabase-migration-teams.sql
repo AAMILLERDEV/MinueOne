@@ -47,9 +47,17 @@ alter table team_members enable row level security;
 create policy "team_members: authenticated read"
   on team_members for select to authenticated using (true);
 
-create policy "team_members: insert own"
+create policy "team_members: insert own or as owner"
   on team_members for insert to authenticated
-  with check (profile_id in (select id from profiles where user_id = auth.uid()));
+  with check (
+    -- user adding themselves
+    profile_id in (select id from profiles where user_id = auth.uid())
+    -- OR the team owner adding someone else
+    or team_id in (
+      select id from teams
+      where owner_profile_id in (select id from profiles where user_id = auth.uid())
+    )
+  );
 
 create policy "team_members: delete own or team owner"
   on team_members for delete to authenticated

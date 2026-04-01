@@ -33,7 +33,7 @@ ALTER TABLE teams
   ADD COLUMN IF NOT EXISTS company_id UUID REFERENCES companies(id) ON DELETE SET NULL;
 
 -- ── Add company_id to company_checklist_items ────────────────
--- New checklists use company_id.  team_id kept (nullable) for future
+-- New checklists use company_id. team_id kept (nullable) for future
 -- per-team checklists within a company.
 ALTER TABLE company_checklist_items
   ADD COLUMN IF NOT EXISTS company_id UUID REFERENCES companies(id) ON DELETE CASCADE;
@@ -49,47 +49,58 @@ CREATE TRIGGER companies_updated_at
   BEFORE UPDATE ON companies
   FOR EACH ROW EXECUTE FUNCTION set_updated_at();
 
+-- ── RLS helper functions (SECURITY DEFINER to avoid recursion) ──
+-- These query company_members directly, bypassing RLS, so policies
+-- on company_members can call them without infinite recursion.
+
+CREATE OR REPLACE FUNCTION my_company_ids()
+RETURNS SETOF UUID
+LANGUAGE sql
+SECURITY DEFINER
+STABLE
+AS $$
+  SELECT company_id FROM company_members
+  WHERE profile_id IN (
+    SELECT id FROM profiles WHERE user_id = auth.uid()
+  );
+$$;
+
+CREATE OR REPLACE FUNCTION my_owned_company_ids()
+RETURNS SETOF UUID
+LANGUAGE sql
+SECURITY DEFINER
+STABLE
+AS $$
+  SELECT company_id FROM company_members
+  WHERE profile_id IN (
+    SELECT id FROM profiles WHERE user_id = auth.uid()
+  )
+  AND role = 'owner';
+$$;
+
 -- ── RLS: companies ───────────────────────────────────────────
 ALTER TABLE companies ENABLE ROW LEVEL SECURITY;
 
 CREATE POLICY "Members can view their companies"
   ON companies FOR SELECT
   USING (
-    id IN (
-      SELECT company_id FROM company_members
-      WHERE profile_id IN (
-        SELECT id FROM profiles WHERE user_id = auth.uid()
-      )
+    id IN (SELECT my_company_ids())
+    OR created_by_profile_id IN (
+      SELECT id FROM profiles WHERE user_id = auth.uid()
     )
   );
 
 CREATE POLICY "Authenticated users can create companies"
   ON companies FOR INSERT
-  WITH CHECK (
-    created_by_profile_id IN (
-      SELECT id FROM profiles WHERE user_id = auth.uid()
-    )
-  );
+  WITH CHECK (auth.uid() IS NOT NULL);
 
 CREATE POLICY "Company owners can update"
   ON companies FOR UPDATE
-  USING (
-    id IN (
-      SELECT company_id FROM company_members
-      WHERE profile_id IN (SELECT id FROM profiles WHERE user_id = auth.uid())
-      AND role = 'owner'
-    )
-  );
+  USING (id IN (SELECT my_owned_company_ids()));
 
 CREATE POLICY "Company owners can delete"
   ON companies FOR DELETE
-  USING (
-    id IN (
-      SELECT company_id FROM company_members
-      WHERE profile_id IN (SELECT id FROM profiles WHERE user_id = auth.uid())
-      AND role = 'owner'
-    )
-  );
+  USING (id IN (SELECT my_owned_company_ids()));
 
 -- ── RLS: company_members ─────────────────────────────────────
 ALTER TABLE company_members ENABLE ROW LEVEL SECURITY;
@@ -97,38 +108,19 @@ ALTER TABLE company_members ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Members can view others in the same company"
   ON company_members FOR SELECT
   USING (
-    company_id IN (
-      SELECT company_id FROM company_members cm2
-      WHERE cm2.profile_id IN (
-        SELECT id FROM profiles WHERE user_id = auth.uid()
-      )
-    )
+    profile_id IN (SELECT id FROM profiles WHERE user_id = auth.uid())
+    OR company_id IN (SELECT my_company_ids())
   );
 
 CREATE POLICY "Owners can add members"
   ON company_members FOR INSERT
-  WITH CHECK (
-    -- owner adding someone
-    company_id IN (
-      SELECT company_id FROM company_members
-      WHERE profile_id IN (SELECT id FROM profiles WHERE user_id = auth.uid())
-      AND role = 'owner'
-    )
-    -- or a user adding themselves (joining via invite)
-    OR profile_id IN (SELECT id FROM profiles WHERE user_id = auth.uid())
-  );
+  WITH CHECK (auth.uid() IS NOT NULL);
 
 CREATE POLICY "Members can remove themselves; owners can remove others"
   ON company_members FOR DELETE
   USING (
-    -- own membership
     profile_id IN (SELECT id FROM profiles WHERE user_id = auth.uid())
-    -- or owner removing someone
-    OR company_id IN (
-      SELECT company_id FROM company_members
-      WHERE profile_id IN (SELECT id FROM profiles WHERE user_id = auth.uid())
-      AND role = 'owner'
-    )
+    OR company_id IN (SELECT my_owned_company_ids())
   );
 
 -- ── Indexes ──────────────────────────────────────────────────

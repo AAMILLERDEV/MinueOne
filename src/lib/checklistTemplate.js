@@ -99,6 +99,6 @@ export function stageCompletionRatio(items, stage) {
 
 /** Returns true if a stage is unlocked given current item states */
 export function isStageUnlocked(items, stage) {
-  if (stage <= 1) return true;
+  if (stage <= 2) return true; // Stages 1 & 2 always accessible
   return stageCompletionRatio(items, stage - 1) >= STAGE_UNLOCK_THRESHOLD;
 }
